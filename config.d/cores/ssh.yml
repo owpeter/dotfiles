@@ -4,7 +4,7 @@ pkgs:
 
 files:
   - id: ssh-config
-    src: "conf/ssh_config"
+    src: "files/ssh_config"
     dest: "{{.vars.home}}/.ssh/config"
     deps: [ssh-key]
     override: true

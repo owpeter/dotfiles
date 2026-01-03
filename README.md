@@ -113,15 +113,15 @@ DDNS_WEBHOOK=https://open.feishu.cn/...
 ```
 
 ### `config.yml`
-位于 `.dotfiles/config.yml`。这是 DotBuilder 的入口文件，定义了任务图的结构。如果你需要修改默认安装的软件列表或依赖关系，可以修改此文件或其引用的子配置文件 (`.dotfiles/configs/**/*.yml`)
+位于 `.dotfiles/config.yml`。这是 DotBuilder 的入口文件，定义了任务图的结构。如果你需要修改默认安装的软件列表或依赖关系，可以修改此文件或其引用的子配置文件 (`.dotfiles/config.d/**/*.yml`)
 
 ## File Tree
 
 ```text
 .
 ├── bin/              # 二进制执行文件
-├── conf/             # 配置文件模板 (vimrc, zshrc, desktop entries...)
-├── configs/          # DotBuilder 任务分块配置
+├── config.d/         # DotBuilder 任务分块配置
+├── files/            # 配置文件模板 (vimrc, zshrc, desktop entries...)
 │   ├── cores/        # 基础包 (git, ssh, utils...)
 │   ├── devs/         # 开发工具 (docker, conda, vscode...)
 │   ├── desktops/     # 桌面软件 (gnome, fcitx, apps...)
@@ -141,7 +141,7 @@ DDNS_WEBHOOK=https://open.feishu.cn/...
 ## Notes 
 
 1.  **重启生效**: 安装完成后（特别是 Docker 用户组、GNOME 扩展、Fcitx5 输入法、字体），建议注销或重启系统
-2.  **Snap**: 如果选择 `desktop` 模式，脚本默认会 **卸载并阻断 Snap**。如果你依赖 Snap，请在 `configs/desktops/likes.yml` 中移除相关任务
+2.  **Snap**: 如果选择 `desktop` 模式，脚本默认会 **卸载并阻断 Snap**。如果你依赖 Snap，请在 `config.d/desktops/likes.yml` 中移除相关任务
 3.  **Sudo**: 安装过程会请求 Sudo 权限以安装系统包
 
 ## License

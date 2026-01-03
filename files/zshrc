@@ -41,8 +41,10 @@ alias -- -='cd -'
 alias myip='ip -c -br a'
 alias ports='sudo ss -nultp'
 alias py='python3'
-alias c='batcat'
 alias bat='batcat'
+alias cat='batcat'
+alias rcat='cat -p'
+alias c='batcat'
 alias grep='rg'
 
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
@@ -112,6 +114,7 @@ extract() {
         echo "'$1' is not a valid file"
     fi
 }
+alias ec='extract'
 
 # ==========================================
 # PM (Package Manager) Wrapper
@@ -369,6 +372,9 @@ _py_completion() {
 }
 
 compdef _py_completion mypy
+
+conda activate $LIKED_CONDA_ENV
+eval "$(_DNSB_COMPLETE=zsh_source dnsb)"
 
 #THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
 export SDKMAN_DIR="$HOME/.sdkman"

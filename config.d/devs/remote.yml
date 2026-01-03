@@ -78,7 +78,7 @@ pkgs:
 
 files:
   - id: sunshine-desktop
-    src: "conf/sunshine.desktop"
+    src: "files/sunshine.desktop"
     dest: "{{.vars.home}}/.config/autostart/sunshine.desktop"
     deps: [sunshine]
     check: '[ "{{.vars.profile}}" != "desktop" ]'

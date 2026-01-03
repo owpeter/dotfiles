@@ -29,17 +29,17 @@ pkgs:
 
 files:
   - id: zshrc
-    src: "conf/zshrc"
+    src: "files/zshrc"
     dest: "{{.vars.home}}/.zshrc"
     override: true
     deps: [zsh]
   
-  - src: "conf/p10k.zsh"
+  - src: "files/p10k.zsh"
     dest: "{{.vars.home}}/.p10k.zsh"
     override: true
   
   - id: zshrc-fcitx5
-    src: "conf/fcitx5.zsh"
+    src: "files/fcitx5.zsh"
     dest: "{{.vars.home}}/.zshrc"
     append: true
     deps: [zshrc, fcitx] # relay on fcitx5

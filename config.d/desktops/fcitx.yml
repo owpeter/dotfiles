@@ -21,7 +21,7 @@ pkgs:
 files:
   
   - id: fcitx-profile
-    src: "conf/fcitx5_profile"
+    src: "files/fcitx5_profile"
     dest: "{{.vars.home}}/.config/fcitx5/profile"
     deps: [fcitx]
     override: true
@@ -29,21 +29,21 @@ files:
     check: '[ "{{.vars.profile}}" != "desktop" ]'
 
   - id: fcitx-ui
-    src: "conf/fcitx5_ui.conf"
+    src: "files/fcitx5_ui.conf"
     dest: "{{.vars.home}}/.config/fcitx5/conf/classicui.conf"
     deps: [fcitx]
     override: true
     check: '[ "{{.vars.profile}}" != "desktop" ]'
   
   - id: rime-custom
-    src: "conf/rime.yaml"
+    src: "files/rime.yaml"
     dest: "{{.vars.home}}/.local/share/fcitx5/rime/default.custom.yaml"
     deps: [fcitx]
     override: true
     check: '[ "{{.vars.profile}}" != "desktop" ]'
 
   - id: rime-origin
-    src: "conf/rime.yaml"
+    src: "files/rime.yaml"
     dest: "{{.vars.home}}/.local/share/fcitx5/rime/default.yaml"
     deps: [fcitx]
     override: true

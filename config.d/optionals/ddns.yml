@@ -4,7 +4,7 @@ vars:
 files:
   ## Optional for linux
   - id: ddns-conf
-    src: "conf/ddns.yml"
+    src: "files/ddns.yml"
     deps: [ddns-go]
     dest: "{{.vars.home}}/.ddns_go_config.yml"
     check: '[ {{.vars.if_ddns}} != "true" ]'

@@ -19,7 +19,7 @@ pkgs:
 
 files:
   - id: gitconfig
-    src: "conf/gitconfig.tpl"
+    src: "files/gitconfig.tpl"
     dest: "{{.vars.home}}/.gitconfig"
     tpl: true
     override: true

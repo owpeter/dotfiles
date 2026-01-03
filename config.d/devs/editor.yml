@@ -43,7 +43,7 @@ pkgs:
 
 files:
   - id: vimrc
-    src: "conf/vimrc"
+    src: "files/vimrc"
     dest: "{{.vars.home}}/.vimrc"
     deps: [vim]
     override: true
