@@ -34,7 +34,8 @@ files:
     override: true
     deps: [zsh]
   
-  - src: "files/p10k.zsh"
+  - id: zshrc-p10k
+    src: "files/p10k.zsh"
     dest: "{{.vars.home}}/.p10k.zsh"
     override: true
   

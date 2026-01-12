@@ -30,13 +30,15 @@ pkgs:
       apt-ri "$URL"
 
 files:
-  - src: "files/wechat.desktop"
+  - id: wechat-autostart
+    src: "files/wechat.desktop"
     dest: "{{.vars.home}}/.config/autostart/wechat.desktop"
     tpl: true
     deps: [wechat]
     check: '[ "{{.vars.profile}}" != "desktop" ]'
   
-  - src: "files/snipaste.desktop"
+  - id: snipaste-autostart
+    src: "files/snipaste.desktop"
     dest: "{{.vars.home}}/.config/autostart/snipaste.desktop"
     tpl: true
     deps: [snipaste]
