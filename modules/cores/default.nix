@@ -5,5 +5,6 @@
         ./shell.nix
         ./git.nix
         ./ssh.nix
+        ./util.nix
     ];
 }
