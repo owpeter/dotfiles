@@ -99,8 +99,8 @@
     initExtra = ''
       [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
       
-      ${builtins.readFile ./files/zsh/opt.zsh}
-      ${builtins.readFile ./files/zsh/func.zsh}
+      ${builtins.readFile ../files/zsh/opt.zsh}
+      ${builtins.readFile ../files/zsh/func.zsh}
     '';
   };
   
