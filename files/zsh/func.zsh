@@ -4,6 +4,37 @@
 # Base Function
 # ==========================================
 
+copypath() {
+  # If no argument passed, use current directory
+  local file="${1:-.}"
+
+  # If argument is not an absolute path, prepend current directory
+  [[ $file = /* ]] || file="$PWD/$file"
+
+  # Copy the absolute path to clipboard
+  # Detect OS and use appropriate clipboard command
+  if [[ "$OSTYPE" == darwin* ]]; then
+    echo -n "$file" | pbcopy
+  elif [[ "$OSTYPE" == cygwin* ]]; then
+    echo -n "$file" > /dev/clipboard
+  else
+    if command -v xclip > /dev/null; then
+      echo -n "$file" | xclip -selection clipboard
+    elif command -v xsel > /dev/null; then
+      echo -n "$file" | xsel --clipboard --input
+    else
+      print "clipcopy: Platform $OSTYPE not supported or xclip/xsel not installed" >&2
+      return 1
+    fi
+  fi
+  
+  echo "Copied path to clipboard: $file"
+}
+
+# Alias it if you want
+alias cpd='copypath'
+
+
 mkcd() {
     mkdir -p "$1" && cd "$1"
 }
@@ -171,6 +202,13 @@ autoload -Uz compinit && compinit
 
 # 1. SC Completion
 _sc_comp() {
+    if ! (( $+functions[_systemctl] )); then
+        autoload -U _systemctl
+        if ! (( $+functions[_systemctl] )); then
+            return 1
+        fi
+    fi
+
     case "${words[2]}" in
         st)   words[2]="status" ;;
         res)  words[2]="restart" ;;
