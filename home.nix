@@ -2,7 +2,7 @@
 
 {
   imports = [
-    ./modules/core.nix
+    ./modules/cores
   ];
 
   home.username = "chi";
