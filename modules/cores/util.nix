@@ -2,8 +2,8 @@
 
 let
   dotfilesSrc = lib.cleanSource ../../.;
-  scriptsPath = dotfilesSrc + "/resource/scripts";
-  helpersPath = dotfilesSrc + "/resource/helpers";
+  scriptsPath = dotfilesSrc + "/resources/scripts";
+  helpersPath = dotfilesSrc + "/resources/helpers";
 
 
   packageScriptsFromDir = dirPath:

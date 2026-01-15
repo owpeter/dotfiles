@@ -4,7 +4,6 @@
   programs.git = {
     enable = true;
     settings = {
-      # 对应 [user]
       user = {
         name = "Kie-Chi";
         email = "example@email.com";
