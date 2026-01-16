@@ -4,6 +4,7 @@
   imports = [
     ./modules/cores
     ./modules/desktops
+    ./modules/devps
   ];
 
   programs.home-manager.enable = true;

@@ -274,22 +274,7 @@ let &t_EI = "\<Esc>[2 q"
 "
 
 filetype off
-set rtp+=~/.vim/bundle/Vundle.vim
 syntax on
-call vundle#begin()
-Plugin 'VundleVim/Vundle.vim'
-Plugin 'scrooloose/nerdtree'               " 文件树
-"Plugin 'Valloric/YouCompleteMe'                        " 代码提示补全插件
-Plugin 'sickill/vim-monokai'               " monokai主题
-Plugin 'vim-airline/vim-airline'           " 美化状态栏
-Plugin 'vim-airline/vim-airline-themes'    " 设置ailine
-Plugin 'plasticboy/vim-markdown'           " markdown高亮
-Plugin 'octol/vim-cpp-enhanced-highlight'  " C++代码高亮
-Plugin 'mhinz/vim-signify'
-Plugin 'dense-analysis/ale'
-Plugin 'morhetz/gruvbox'                                       " 主题
-Plugin 'luochen1990/rainbow'                          "rainbow parenthesis
-call vundle#end()
 
 "------------------------------------
 "-------------keyboard map-----------
