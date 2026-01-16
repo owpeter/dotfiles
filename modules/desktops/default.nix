@@ -2,9 +2,10 @@
 {
   imports = [
     ./base.nix
-    # ./fcitx.nix
+    ./fcitx.nix
+    ./rime.nix
     ./font.nix
-    # ./gnome.nix
-    # ./terminal.nix
+    ./gnome.nix
+    ./terminal.nix
   ];
 }
