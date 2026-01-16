@@ -13,17 +13,19 @@
   outputs = { self, nixpkgs, home-manager, nixgl, ... }:
     let
       system = "x86_64-linux";
-      pkgs = import nixpkgs {
-        inherit system;
-        config.allowUnfree = true;
-        overlays = [ nixgl.overlay ];
-      };
-    in {
-      homeConfigurations = {
-        "chi" = home-manager.lib.homeManagerConfiguration {
-          inherit pkgs;
-          modules = [ ./home.nix ];
+      mkHome = user: home-manager.lib.homeManagerConfiguration {
+        pkgs = import nixpkgs {
+          inherit system;
+          config.allowUnfree = true;
         };
+        modules = [
+          ./hosts/${user}/default.nix
+        ];
+      };
+    in
+    {
+      homeConfigurations = {
+        "chi" = mkHome "chi";
       };
     };
 }

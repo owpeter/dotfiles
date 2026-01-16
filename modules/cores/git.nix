@@ -1,12 +1,12 @@
-{ pkgs, lib, config, ... }:
+{ pkgs, lib, secrets, config, ... }:
 
 {
   programs.git = {
     enable = true;
     settings = {
       user = {
-        name = "Kie-Chi";
-        email = "example@email.com";
+        name = secrets.username or "Somebody";
+        email = secrets.email or "example@email.com";
       };
 
       alias = {

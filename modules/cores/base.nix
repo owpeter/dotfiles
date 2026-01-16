@@ -15,6 +15,10 @@
     tmux
     systemd
 
+    # crypt
+    git-crypt
+    gnupg
+
     # network
     curl 
     wget 
