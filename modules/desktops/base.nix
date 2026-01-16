@@ -2,12 +2,19 @@
 
 {
   home.packages = with pkgs; [
-    kdePackages.okular
+    # utils
     copyq
+
+    # apps
+    kdePackages.okular
     pavucontrol
     wechat
     google-chrome
     snipaste
+
+    # patches
+    libcanberra-gtk3
+    mesa
   ];
 
   xdg.autostart.entries = {
