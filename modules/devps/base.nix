@@ -16,6 +16,8 @@ in
     docker-color-output
     fuse-overlayfs
     slirp4netns
+    iptables
+    nftables
     rootlesskit
     procps
   ];
@@ -76,6 +78,8 @@ in
         fuse-overlayfs
         slirp4netns
         iptables
+        nftables
+        rootlesskit
         procps
       ];
       ExecStart = "${pkgs.docker.moby}/libexec/docker/dockerd-rootless.sh";

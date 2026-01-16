@@ -7,5 +7,6 @@
     ./font.nix
     ./gnome.nix
     ./terminal.nix
+    ./sunshine.nix
   ];
 }
