@@ -1,102 +1,111 @@
 #!/bin/bash
+
+# ==============================================================================
+# setup.sh - Generic, Dictionary-Driven Installer for Nix-based Dotfiles
+#
+# The script will automatically handle user prompts and file generation.
+# ==============================================================================
+
 set -e
 
 BASE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DOTB_BIN="$BASE_DIR/bin/dotb"
-DTF_BIN="$BASE_DIR/bin/dtf"
-EXC_PATH="$HOME/.local/bin"
-CONFIG_FILE="$BASE_DIR/config.yml"
-ENV_FILE="$BASE_DIR/my.env"
+SECRETS_FILE="$BASE_DIR/secrets.nix"
+REQUIRES_SCRIPT="$BASE_DIR/requires.sh"
+
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
+RED='\033[0;31m'
 NC='\033[0m'
 
-echo -e "${GREEN}-> Setting up environment from $BASE_DIR${NC}"
-if [ ! -f "$ENV_FILE" ]; then
-    echo -e "${YELLOW}Configuration file (my.env) not found.${NC}"
-    echo -e "${YELLOW}Starting interactive setup wizard...${NC}\n"
+msg_info() { echo -e "${CYAN}[INFO]${NC} $1"; }
+msg_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
+msg_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+msg_error() { echo -e "${RED}[ERROR]${NC} $1" >&2; exit 1; }
 
-    # --- 1. Username ---
-    DEFAULT_USER=$(whoami)
-    echo -e "${CYAN}[?] Username${NC} (Recommended: your GitHub username)"
-    read -p "    Enter username [default: $DEFAULT_USER]: " INPUT_USER
-    USERNAME=${INPUT_USER:-$DEFAULT_USER}
+CONFIG_ITEMS="BASE|home.user|Enter your system username|whoami
+BASE|home.dir|Enter your home directory path|echo \"/home/\$(whoami)\"
+GIT|git.name|Enter your Git user name|echo \"Someone\"
+GIT|git.email|Enter your Git email address|echo \"someone@example.com\""
+
+gen() {
+    msg_info "Configuring user identity for secrets.nix..."
+    echo "Please provide the following information. Press Enter to accept the default value."
+
+    # FIX 2: Initialize with a real newline to ensure printf %b works correctly.
+    local file_content="{\n"
+    local current_group=""
+    while IFS='|' read -r group nix_path prompt default_cmd; do
+        [ -z "$group" ] && continue
+
+        if [ "$group" != "$current_group" ]; then
+            if [ -n "$current_group" ]; then
+                file_content+="\n"
+            fi
+            # Using literal newlines which is safer and clearer
+            file_content+="  ###################################\n"
+            file_content+="  #  ${group} IDENTITY CONFIGURATION  #\n"
+            file_content+="  ###################################\n"
+            current_group="$group"
+        fi
+
+        # FIX 1: Use 'eval' to correctly execute commands with quotes and substitutions.
+        # This is necessary for commands like `echo "/home/$(whoami)"`.
+        local default_val
+        default_val=$(eval "$default_cmd")
+
+        read -p "$(echo -e "${GREEN}${prompt}${NC} [default: ${YELLOW}${default_val}${NC}]: ")" user_input < /dev/tty
+        local final_value="${user_input:-$default_val}"
+
+        final_value="${final_value//\\/\\\\}"
+        final_value="${final_value//\"/\\\"}"
+
+        # Using printf to build the string piece by piece is robust
+        file_content+=$(printf "  %s = \"%s\";\n" "$nix_path" "$final_value")
+
+    done <<< "$CONFIG_ITEMS"
+
+    file_content+="\n}"
+
+    # FIX 2: Use '%b' to interpret backslash escapes like \n when writing the file.
+    printf '%b' "$file_content" > "$SECRETS_FILE"
+
+    msg_success "Generated secrets.nix at: $SECRETS_FILE"
+    local TARGET_DIR="$HOME/.config/dotfiles"
+    local TARGET_LINK="$TARGET_DIR/secrets.nix"
+    msg_info "Creating symbolic link for Home Manager..."
+    mkdir -p "$TARGET_DIR"
+    ln -sf "$SECRETS_FILE" "$TARGET_LINK"
+    msg_success "Linked $SECRETS_FILE to $TARGET_LINK"
     echo ""
+}
 
-    # --- 2. Email ---
-    echo -e "${CYAN}[?] Email${NC} (Recommended: your GitHub email for git config)"
-    read -p "    Enter email: " EMAIL
+msg_info "Starting setup..."
+msg_info "Running prerequisite installer (requires.sh)..."
+if [ ! -f "$REQUIRES_SCRIPT" ]; then
+    msg_error "'requires.sh' not found in the script directory: $BASE_DIR"
+fi
+chmod +x "$REQUIRES_SCRIPT"
+if ! "$REQUIRES_SCRIPT"; then
+    msg_error "The prerequisite ('requires.sh') failed. Please check the output above for errors."
+fi
+msg_success "Prerequisites check and installation completed successfully."
+echo ""
+if [ -f "$SECRETS_FILE" ]; then
+    msg_warn "'secrets.nix' already exists. Your existing configuration will be lost if you continue."
+    read -p "$(echo -e "${YELLOW}Do you want to overwrite it? (y/N): ${NC}")" OVERWRITE_CHOICE
     echo ""
-
-    # --- 3. Profile ---
-    echo -e "${CYAN}[?] Profile${NC} (Select the environment type)"
-    echo "    1) desktop (GNOME, GUI Apps, Fcitx5, etc.)"
-    echo "    2) server  (Headless, Terminal only)"
-    read -p "    Select [default: 1]: " PROF_OPT
-    if [ "$PROF_OPT" == "2" ]; then
-        PROFILE="server"
+    if [[ "$OVERWRITE_CHOICE" =~ ^[Yy]$ ]]; then
+        msg_info "Proceeding with reconfiguration..."
+        gen
     else
-        PROFILE="desktop"
+        msg_info "Skipping reconfiguration. Your existing 'secrets.nix' is preserved."
+        echo ""
     fi
-    echo ""
-
-    # --- 4. DDNS ---
-    echo -e "${CYAN}[?] DDNS${NC} (Enable Dynamic DNS update service?)"
-    read -p "    Enable DDNS? (y/N) [default: N]: " DDNS_OPT
-    if [[ "$DDNS_OPT" =~ ^[Yy]$ ]]; then
-        IF_DDNS="true"
-        echo -e "    ${YELLOW}Note: Please manually edit my.env later to fill in DDNS secrets.${NC}"
-    else
-        IF_DDNS="false"
-    fi
-    echo ""
-
-    # --- gen my.env ---
-    echo "# Auto-generated by setup.sh on $(date)" > "$ENV_FILE"
-    echo "username=$USERNAME" >> "$ENV_FILE"
-    echo "email=$EMAIL" >> "$ENV_FILE"
-    echo "profile=$PROFILE" >> "$ENV_FILE"
-    echo "if_ddns=$IF_DDNS" >> "$ENV_FILE"
-
-    echo -e "${GREEN}-> Configuration saved to $ENV_FILE${NC}"
-    echo "----------------------------------------------------"
 else
-    echo -e "${GREEN}-> Loading existing configuration from $ENV_FILE${NC}"
+    gen
 fi
 
-if [ -f "$DOTB_BIN" ]; then
-    chmod +x "$DOTB_BIN"
-else
-    echo -e "${YELLOW}Warning: Binary not found at $DOTB_BIN${NC}"
-    echo "Attempting to build from source (requires Go)..."
-    if command -v go >/dev/null; then
-        (cd "$BASE_DIR" && go build -o bin/dotb cmd/dotbuilder/main.go)
-        echo -e "${GREEN}-> Build successful.${NC}"
-    else
-        echo "Error: Go not installed and binary missing."
-        exit 1
-    fi
-fi
-
-if [ -f "$DTF_BIN" ]; then
-    chmod +x "$DTF_BIN"
-else
-    echo -e "${YELLOW}Warning: dtf binary not found at $DTF_BIN${NC}"
-    exit 1
-fi
-
-if [ ! -f "$EXC_PATH/dotb" ]; then
-    if command -v sudo >/dev/null && [ "$EUID" -ne 0 ]; then
-        echo "Creating symlink for dotb..."
-        sudo ln -sf "$DOTB_BIN" "$EXC_PATH/dotb" || echo -e "${YELLOW}Warning: Failed to create symlink, skipping.${NC}"
-    fi
-fi
-if [ ! -f "$EXC_PATH/dtf" ]; then
-    if command -v sudo >/dev/null && [ "$EUID" -ne 0 ]; then
-        echo "Creating symlink for dtf..."
-        sudo ln -sf "$DTF_BIN" "$EXC_PATH/dtf" || echo -e "${YELLOW}Warning: Failed to create symlink, skipping.${NC}"
-    fi
-fi
-echo -e "${GREEN}-> Executing DotBuilder...${NC}"
-"$DOTB_BIN" -c "$CONFIG_FILE" "$@"
+msg_success "Initial setup process finished!"
+msg_info "Your dotfiles are ready to be applied."
+msg_warn "You may need to log out and log back in for all changes (like shell) to take effect."
