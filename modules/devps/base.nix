@@ -70,24 +70,26 @@ in
       After = "docker.socket network-online.target";
       Wants = "network-online.target";
     };
-
+    Service.Environment = [
+      "PATH=${pkgs.docker}/bin:${pkgs.fuse-overlayfs}/bin:${pkgs.slirp4netns}/bin:${pkgs.iptables}/bin:${pkgs.nftables}/bin:${pkgs.rootlesskit}/bin:${pkgs.procps}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    ];
     Service = {
       Type = "notify"; 
-      path = with pkgs; [
-        docker
-        fuse-overlayfs
-        slirp4netns
-        iptables
-        nftables
-        rootlesskit
-        procps
-      ];
       ExecStart = "${pkgs.docker.moby}/libexec/docker/dockerd-rootless.sh";
-      KillMode = "process";
+      ExecReload = "/bin/kill -s HUP $MAINPID";
       Restart = "on-failure";
-      RestartSec = "5s";
+      RestartSec = 2;
       TimeoutStartSec = 0;
       Delegate = "yes";
+      TimeoutSec = 0;
+      StartLimitBurst = 3;
+      StartLimitIntervalSec = "60s";
+      LimitNOFILE = "infinity";
+      LimitNPROC = "infinity";
+      LimitCORE = "infinity";
+      TasksMax = "infinity";
+      NotifyAccess = "all";
+      KillMode = "mixed";
     };
     Install = {
       WantedBy = [ "default.target" ];
