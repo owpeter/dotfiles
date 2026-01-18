@@ -80,6 +80,11 @@ gen() {
     echo ""
 }
 
+cold() {
+    msg_info "Applying Home Manager configuration for the first time..."
+    nix run home-manager/master -- switch --flake .#default --impure
+}
+
 msg_info "Starting setup..."
 msg_info "Running prerequisite installer (requires.sh)..."
 if [ ! -f "$REQUIRES_SCRIPT" ]; then
@@ -107,5 +112,6 @@ else
 fi
 
 msg_success "Initial setup process finished!"
+cold
 msg_info "Your dotfiles are ready to be applied."
-msg_warn "You may need to log out and log back in for all changes (like shell) to take effect."
+msg_warn "You may need to log out and log back in for all changes to take effect."

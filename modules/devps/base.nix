@@ -27,9 +27,6 @@
         eval "$(mamba shell hook --shell zsh)"
       fi
       
-      # You can add other startup scripts here as well
-      # For example:
-      export EDITOR='nvim'
       export DOCKER_HOST="unix://$XDG_RUNTIME_DIR/docker.sock"
     '';
   };

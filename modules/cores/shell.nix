@@ -38,10 +38,7 @@
       myip = "ip -c -br a";
       ports = "sudo ss -nultp";
       py = "python3";
-      
-      bat = "bat";
-      cat = "bat";
-      rcat = "cat -p";
+      rcat = "command cat";
       grep = "rg";
       
     };

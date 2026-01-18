@@ -69,6 +69,15 @@ extract() {
 }
 alias ec='extract'
 
+function cat() {
+    if [ -t 1 ]; then
+        batcat "$@"
+    else
+        command cat "$@"
+    fi
+}
+alias c='cat'
+
 
 # ==========================================
 # PM Wrapper
@@ -280,3 +289,61 @@ _pm() {
     _$tool
 }
 compdef _pm pm
+
+_dtf() {
+    local context state state_descr line
+    typeset -A opt_args
+
+    _arguments -C \
+        '1:Command:->cmds' \
+        '*:Arguments:->args'
+
+    case $state in
+        cmds)
+            local -a commands
+            commands=(
+                'a:Alias for apply'
+                'apply:Apply the Home Manager configuration'
+                'clean:Run Nix garbage collection to clean old generations'
+                'e:Alias for edit'
+                'edit:Open the dotfiles directory in your default editor'
+                'gc:Alias for clean'
+                'h:Alias for help'
+                'help:Show the help message'
+                'p:Alias for push'
+                'push:Commit and push changes with an optional message'
+                'r:Alias for rollback'
+                'rollback:Rollback to a previous configuration generation'
+                's:Alias for sync'
+                'st:Alias for status'
+                'status:Show the git status of the dotfiles repository'
+                'sync:Pull latest changes from git and then apply'
+                'u:Alias for update'
+                'update:Update flake inputs (nixpkgs, etc.)'
+            )
+            _describe -t commands 'dtf commands' commands
+            ;;
+        args)
+            case $line[1] in
+                p|push)
+                    # For push, we just want to provide a hint, not complete a file.
+                    _message "✍️  Commit message (optional)"
+                    ;;
+                r|rollback)
+                    # For rollback, we can suggest the 'list' command or a number.
+                    local -a rollback_opts
+                    rollback_opts=(
+                        "list:List all available generations"
+                    )
+                    _describe -t options 'rollback options' rollback_opts
+                    _message "🔢 or enter a specific generation number"
+                    ;;
+                *)
+                    # All other commands do not take arguments, so we complete nothing.
+                    ;;
+            esac
+            ;;
+    esac
+}
+
+compdef _dtf dtf
