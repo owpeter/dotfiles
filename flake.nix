@@ -13,19 +13,15 @@
   outputs = { self, nixpkgs, home-manager, nixgl, ... }:
     let
       system = "x86_64-linux";
-      mkHome = user: home-manager.lib.homeManagerConfiguration {
-        pkgs = import nixpkgs {
-          inherit system;
-          config.allowUnfree = true;
-        };
-        modules = [
-          ./hosts/${user}/default.nix
-        ];
+      pkgs = import nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
       };
     in
     {
-      homeConfigurations = {
-        "chi" = mkHome "chi";
+      homeConfigurations."default" = home-manager.lib.homeManagerConfiguration {
+        inherit pkgs;
+        modules = [ ./home.nix ];
       };
     };
 }

@@ -1,8 +1,5 @@
 { pkgs, config, lib, ... }:
 
-let
-  userName = config.home.username;
-in
 {
   home.packages = with pkgs; [
     # lib dev
@@ -113,7 +110,7 @@ in
         /usr/bin/sudo apt update && /usr/bin/sudo apt install -y uidmap
       fi
 
-      if ! grep -q "^${userName}:" /etc/subuid || ! grep -q "^${userName}:" /etc/subgid; then
+      if ! grep -q "^${config.home.username}:" /etc/subuid || ! grep -q "^${config.home.username}:" /etc/subgid; then
         all_checks_ok=false
         nix-shell -p docker run "dockerd-rootless dockerd-rootless-setuptool.sh install"
         dockerd-rootless dockerd-rootless-setuptool.sh install

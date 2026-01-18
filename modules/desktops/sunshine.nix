@@ -1,7 +1,6 @@
 { pkgs, config, lib, ... }:
 
 let
-  userName = config.home.username;
   sunshineAutostartDesktop = pkgs.runCommand "sunshine-autostart-desktop" {} ''
     mkdir -p $out/share/applications
     cp ${../../files/remote/sunshine.desktop} $out/share/applications/sunshine.desktop

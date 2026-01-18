@@ -5,8 +5,8 @@
     enable = true;
     settings = {
       user = {
-        name = secrets.username or "Somebody";
-        email = secrets.email or "example@email.com";
+        name = secrets.git.name or "Somebody";
+        email = secrets.git.email or "example@email.com";
       };
 
       alias = {
