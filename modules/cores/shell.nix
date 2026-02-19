@@ -1,4 +1,4 @@
-{ pkgs, lib, config, ... }:
+{ pkgs, lib, config, secrets, ... }:
 
 {
     programs.zsh = {
@@ -26,10 +26,11 @@
       GTK_IM_MODULE = "fcitx";
       QT_IM_MODULE = "fcitx";
       SDL_IM_MODULE = "fcitx";
+      DOTFILES_DIR = secrets.dotfiles.path;
     };
 
     shellAliases = {
-      zshconf = "vim ~/.dotfiles/modules/core.nix";
+      zshconf = "vim ${secrets.dotfiles.path}/modules/core.nix";
       omzconf = "vim ~/.oh-my-zsh";
       
       ll = "ls -alh";
