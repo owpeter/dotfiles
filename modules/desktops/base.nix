@@ -22,8 +22,12 @@ in
     kdePackages.okular
     pavucontrol
     wechat
+    feishu
+    wemeet
+    todesk
     google-chrome
     snipaste
+    wpsoffice-cn
 
     # patches
     libcanberra-gtk3
