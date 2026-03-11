@@ -124,6 +124,13 @@ set_val() {
     printf -v "VALUES_${safe_key}" '%s' "$val"
 }
 
+get_existing_val() {
+    local key="$1"
+    if [ -f "$SECRETS_FILE" ]; then
+        grep -w "$key" "$SECRETS_FILE" | sed -n "s/.*$key[[:space:]]*=[[:space:]]*\"\([^\"]*\)\".*/\1/p" | head -n 1
+    fi
+}
+
 # ==========================================
 # CONFIG
 # FORMAT: 
@@ -151,6 +158,14 @@ read -r -d '' CONFIG_JSON << 'EOF' || true
   },
   {
     "group": "BASE",
+    "path": "home.passwd",
+    "prompt": "System password",
+    "defaultCmd": "whoami",
+    "validation": "[[ -n \"$input_val\" ]]", 
+    "errorMsg": "System password cannot be empty."
+  },
+  {
+    "group": "BASE",
     "path": "home.dir",
     "prompt": "Home directory",
     "defaultCmd": "echo \"$HOME\"",
@@ -174,18 +189,19 @@ read -r -d '' CONFIG_JSON << 'EOF' || true
     "errorMsg": "Please enter a valid email address."
   },
   {
-    "group": "BASE",
-    "path": "dotfiles.path",
-    "prompt": "Dotfiles local path",
-    "defaultCmd": "echo \"$BASE_DIR\"",
-    "ignore": true
-  },
-  {
     "group": "PROXY",
     "path": "proxy.status",
     "prompt": "Proxy status",
     "defaultCmd": "echo 'none'",
     "choices": ["none", "manual", "keep"]
+  },
+  {
+    "group": "PROXY",
+    "path": "proxy.tun",
+    "prompt": "Proxy TUN status",
+    "defaultCmd": "echo 'true'",
+    "condition": "[[ \"$(get_val proxy.status)\" != \"none\" ]]",
+    "choices": ["true", "false"]
   },
   {
     "group": "PROXY",
@@ -195,6 +211,13 @@ read -r -d '' CONFIG_JSON << 'EOF' || true
     "condition": "[[ \"$(get_val proxy.status)\" != \"none\" ]]",
     "validation": "python3 -c \"import sys; url = sys.stdin.read().strip(); sys.exit(0) if url.startswith('http://') or url.startswith('https://') else sys.exit(1)\" <<< \"$input_val\"",
     "errorMsg": "Proxy URL must start with http:// or https://"
+  },
+  {
+    "group": "ENV",
+    "path": "dotfiles.path",
+    "prompt": "Dotfiles local path",
+    "defaultCmd": "echo \"$BASE_DIR\"",
+    "ignore": true
   }
 ]
 EOF
@@ -227,8 +250,14 @@ gen() {
             current_group="$group"
         fi
 
+        local existing_val=$(get_existing_val "$nix_path")
         local default_val
-        default_val=$(eval "$default_cmd")
+        
+        if [ -n "$existing_val" ]; then
+            default_val="$existing_val"
+        else
+            default_val=$(eval "$default_cmd")
+        fi
         local final_value=""
         
         if [ "$ignore" = "true" ]; then
@@ -290,7 +319,7 @@ gen() {
 
 cold() {
     ui_info "Applying Home Manager configuration for the first time..."
-    bash -c "source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh 2>/dev/null || true; bash $BASE_DIR/resources/scripts/dtf init"
+    bash -c "source /nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh 2>/dev/null || true; bash $BASE_DIR/resources/scripts/dtf apply"
 }
 
 if [ ! -f "$REQUIRES_SCRIPT" ]; then
