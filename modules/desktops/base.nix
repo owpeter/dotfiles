@@ -27,6 +27,7 @@ in
     todesk
     google-chrome
     snipaste
+    wpsoffice-cn
 
     # patches
     libcanberra-gtk3
