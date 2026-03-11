@@ -1,5 +1,9 @@
-{ pkgs, config, lib, ... }:
+{ pkgs, config, lib, secrets, ... }:
 
+let
+  passwd = secrets.home.passwd;
+  secretFilePath = "$HOME/.local/state/sudo-pass";
+in
 {
   home.packages = with pkgs; [
     # lib dev
@@ -8,15 +12,6 @@
     mamba-cpp
 
     # virtualenv
-    docker
-    docker-compose
-    docker-color-output
-    fuse-overlayfs
-    slirp4netns
-    iptables
-    nftables
-    rootlesskit
-    procps
   ];
 
   programs.zsh = {
@@ -26,8 +21,6 @@
       if command -v mamba &> /dev/null; then
         eval "$(mamba shell hook --shell zsh)"
       fi
-      
-      export DOCKER_HOST="unix://$XDG_RUNTIME_DIR/docker.sock"
     '';
   };
 
@@ -41,81 +34,52 @@
       - defaults
   '';
 
-  # virtualenv
-  programs.lazydocker.enable = true;
+  home.activation.installNativeDocker = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    SECRET_FILE="$HOME/.config/dotfiles/secrets.nix"
 
-  systemd.user.sockets.docker = {
-    Unit = {
-      Description = "Docker Socket for the API";
-    };
-    Socket = {
-      ListenStream = "%t/docker.sock";
-      SocketMode = "0660";
-    };
-    Install = {
-      WantedBy = [ "sockets.target" ];
-    };
-  };
-
-  systemd.user.services.docker = {
-    Unit = {
-      Description = "Docker Application Container Engine (Rootless)";
-      Requires = "docker.socket";
-      After = "docker.socket network-online.target";
-      Wants = "network-online.target";
-    };
-    Service.Environment = [
-      "PATH=${pkgs.docker}/bin:${pkgs.fuse-overlayfs}/bin:${pkgs.slirp4netns}/bin:${pkgs.iptables}/bin:${pkgs.nftables}/bin:${pkgs.rootlesskit}/bin:${pkgs.procps}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-    ];
-    Service = {
-      Type = "notify"; 
-      ExecStart = "${pkgs.docker.moby}/libexec/docker/dockerd-rootless.sh";
-      ExecReload = "/bin/kill -s HUP $MAINPID";
-      Restart = "on-failure";
-      RestartSec = 2;
-      TimeoutStartSec = 0;
-      Delegate = "yes";
-      TimeoutSec = 0;
-      StartLimitBurst = 3;
-      StartLimitIntervalSec = "60s";
-      LimitNOFILE = "infinity";
-      LimitNPROC = "infinity";
-      LimitCORE = "infinity";
-      TasksMax = "infinity";
-      NotifyAccess = "all";
-      KillMode = "mixed";
-    };
-    Install = {
-      WantedBy = [ "default.target" ];
-    };
-  };
-
-  home.activation = {
-    checkDockerRootlessDeps = lib.hm.dag.entryAfter ["writeBoundary"] ''
-      echo "Checking system dependencies for Docker Rootless..."
-      all_checks_ok=true
-      if [ ! -f /usr/bin/newuidmap ]; then
-        all_checks_ok=false
-        echo "   =================================================="
-        echo "   =                                                ="
-        echo "   =                                                ="
-        echo "   =        PLEASE INSTALL uidmap FIRST!!!!!!       ="
-        echo "   =                                                ="
-        echo "   =                                                ="
-        echo "   =================================================="
-        echo "   example: /usr/bin/sudo apt update && /usr/bin/sudo apt install uidmap"
-        /usr/bin/sudo apt update && /usr/bin/sudo apt install -y uidmap
+    if [ ! -e $HOME/.config/dotfiles/docker.installed ]; then
+      echo "No Docker found, installing..."      
+      if [ ! -f "$SECRET_FILE" ]; then
+        echo "No password file found at $SECRET_FILE."
+        exit 0
       fi
 
-      if ! grep -q "^${config.home.username}:" /etc/subuid || ! grep -q "^${config.home.username}:" /etc/subgid; then
-        all_checks_ok=false
-        nix-shell -p docker run "dockerd-rootless dockerd-rootless-setuptool.sh install"
-        dockerd-rootless dockerd-rootless-setuptool.sh install
+      SUDO_PWD=$(${pkgs.gnugrep}/bin/grep -w "home\.passwd" "$SECRET_FILE" | sed -n "s/.*home\.passwd[[:space:]]*=[[:space:]]*\"\([^\"]*\)\".*/\1/p" | head -n 1)      
+      if [ -z "$SUDO_PWD" ]; then
+        echo "Failed to extract password from $SECRET_FILE."
+        exit 1
       fi
+      echo "Password is $SUDO_PWD"
 
-      if [ "$all_checks_ok" = true ]; then
-        echo "All system dependencies for Docker Rootless seem to be met."
+      HOST_CURL="/usr/bin/curl"
+      HOST_SUDO="/usr/bin/sudo"
+      HOST_SH="/bin/sh"
+      HOST_USERMOD="/usr/sbin/usermod"
+      HOST_TOUCH="/usr/bin/touch"
+      $DRY_RUN_CMD ${pkgs.curl}/bin/curl -fsSL https://get.docker.com -o /tmp/get-docker.sh      
+      $DRY_RUN_CMD echo "$SUDO_PWD" | $HOST_SUDO -S $HOST_SH /tmp/get-docker.sh --mirror Aliyun
+      $DRY_RUN_CMD echo "$SUDO_PWD" | $HOST_SUDO -S $HOST_USERMOD -aG docker ${secrets.home.user}
+      if [ -z "$DRY_RUN_CMD" ]; then
+        if id -nG "${secrets.home.user}" | grep -qw "docker"; then
+            echo "To use Docker without sudo in this terminal, you must run: 'newgrp docker'"
+        fi
+      else
+        echo "Docker installation and user modification dry-run completed."
       fi
-    '';
-  };
+      echo "Docker installed successfully!"
+      $DRY_RUN_CMD $HOST_TOUCH $HOME/.config/dotfiles/docker.installed
+    else
+      if [ -z "$DRY_RUN_CMD" ]; then
+        if id -nG "${secrets.home.user}" | grep -qw "docker"; then
+          echo "Docker All right."
+        else
+          echo "$SUDO_PWD" | $HOST_SUDO -S $HOST_USERMOD -aG docker ${secrets.home.user}
+        fi
+      else
+        echo "Docker installation and user modification dry-run completed."
+      fi
+      echo "Docker found, skipping installation."
+    fi
+  '';
+
 }
