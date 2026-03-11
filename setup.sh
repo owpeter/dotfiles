@@ -193,7 +193,8 @@ read -r -d '' CONFIG_JSON << 'EOF' || true
     "path": "proxy.status",
     "prompt": "Proxy status",
     "defaultCmd": "echo 'none'",
-    "choices": ["none", "manual", "keep"]
+    "choices": ["none", "manual", "keep"],
+    "ignore": true
   },
   {
     "group": "PROXY",
