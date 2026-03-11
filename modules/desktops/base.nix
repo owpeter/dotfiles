@@ -22,6 +22,7 @@ in
     kdePackages.okular
     pavucontrol
     wechat
+    feishu
     google-chrome
     snipaste
 
