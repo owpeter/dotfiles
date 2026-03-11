@@ -32,7 +32,6 @@
     jq 
     xclip 
     xsel
-    cifs-utils
     
     # opt 
     fzf 
