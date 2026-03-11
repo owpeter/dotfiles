@@ -16,6 +16,13 @@ in
       picture-options = "zoom";
     };
 
+    "org/gnome/shell/keybindings/toggle-message-tray" = ["<Alt>v"];
+    "org/gnome/shell/extensions" = {
+      "dash-to-dock" = {
+        "dock-fixed" = false;
+      };
+    };
+
     "org/gnome/settings-daemon/plugins/media-keys" = {
       custom-keybindings = [
         "/org/gnome/settings-daemon/plugins/media-keys/custom-keybindings/custom-tilix-quake/"
