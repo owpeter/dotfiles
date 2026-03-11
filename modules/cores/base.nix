@@ -39,5 +39,12 @@
     ripgrep 
     bat
     tree
+    chsrc
   ];
+
+  home.file.".config/nixpkgs/config.nix".text = ''
+    {
+      allowUnfree = true;
+    }
+  '';
 }
