@@ -23,6 +23,7 @@ in
     pavucontrol
     wechat
     feishu
+    wemeet
     google-chrome
     snipaste
 
