@@ -399,6 +399,7 @@ _dtf() {
     typeset -A opt_args
 
     _arguments -C \
+        '(-e)-e[Enable debug mode]' \
         '1:Command:->cmds' \
         '*:Arguments:->args'
 
@@ -408,6 +409,9 @@ _dtf() {
             commands=(
                 'a:Alias for apply'
                 'apply:Apply the Home Manager configuration'
+                'switch:Alias for apply'
+                'c:Alias for config'
+                'config:Run the setup script to configure secrets'
                 'clean:Run Nix garbage collection to clean old generations'
                 'e:Alias for edit'
                 'edit:Open the dotfiles directory in your default editor'
@@ -421,6 +425,10 @@ _dtf() {
                 's:Alias for sync'
                 'st:Alias for status'
                 'status:Show the git status of the dotfiles repository'
+                'd:Alias for diff'
+                'dif:Alias for dif'
+                'diff:Show the git difference of the dotfiles repository'
+                'git:Execute git commands in the dotfiles directory'
                 'sync:Pull latest changes from git and then apply'
                 'u:Alias for update'
                 'update:Update flake inputs (nixpkgs, etc.)'
@@ -430,8 +438,19 @@ _dtf() {
         args)
             case $line[1] in
                 p|push)
-                    # For push, we just want to provide a hint, not complete a file.
-                    _message "✍️  Commit message (optional)"
+                    if (( CURRENT == 3 )); then
+                        # Second argument: commit message
+                        _message "Commit message (optional)"
+                    elif (( CURRENT == 4 )); then
+                        # Third argument: remote name
+                        local -a remotes
+                        remotes=($(git -C "${DOTFILES_DIR:-${HOME}/.dotfiles}" remote 2>/dev/null))
+                        if [[ ${#remotes[@]} -gt 0 ]]; then
+                            _describe -t remotes 'git remotes' remotes
+                        else
+                            _message "Remote name (default: origin)"
+                        fi
+                    fi
                     ;;
                 r|rollback)
                     # For rollback, we can suggest the 'list' command or a number.
@@ -440,7 +459,17 @@ _dtf() {
                         "list:List all available generations"
                     )
                     _describe -t options 'rollback options' rollback_opts
-                    _message "🔢 or enter a specific generation number"
+                    _message "or enter a specific generation number"
+                    ;;                
+                git)
+                    local offset=${words[(i)git]}
+                    
+                    if (( offset <= ${#words} )); then
+                        words=("${(@)words[offset,-1]}")
+                        (( CURRENT = CURRENT - offset + 1 ))
+                        local service="git"
+                        _normal
+                    fi
                     ;;
                 *)
                     # All other commands do not take arguments, so we complete nothing.
