@@ -18,6 +18,13 @@ in
     home.username = secrets.home.user;
     home.homeDirectory = secrets.home.dir;
     home.stateVersion = "25.11";
+    home.pointerCursor = {
+      name = "Yaru";
+      package = pkgs.yaru-theme;
+      size = 24;
+      x11.enable = true;
+      gtk.enable = true;
+    };
     _module.args.secrets = secrets;
     programs.home-manager.enable = true;
   };
