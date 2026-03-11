@@ -37,6 +37,45 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
+configure_apparmor_userns() {
+    local os_name="$1"
+    local conf_file="/etc/sysctl.d/20-apparmor-userns.conf"
+    local conf_key="kernel.apparmor_restrict_unprivileged_userns"
+    local conf_value="0"
+    local conf_line="${conf_key}=${conf_value}"
+    local current_value=""
+
+    case "$os_name" in
+        ubuntu|debian)
+            ;;
+        *)
+            return
+            ;;
+    esac
+
+    check_sudo
+
+    if [ -f "$conf_file" ] && grep -Fxq "$conf_line" "$conf_file"; then
+        msg_success "AppArmor user namespace compatibility is already configured."
+    else
+        msg_info "Configuring AppArmor user namespace compatibility for Nix-installed applications..."
+        echo "$conf_line" | sudo tee "$conf_file" >/dev/null
+    fi
+
+    current_value=$(sysctl -n "$conf_key" 2>/dev/null || true)
+    if [[ "$current_value" != "$conf_value" ]]; then
+        msg_info "Applying sysctl setting from $conf_file..."
+        sudo sysctl -p "$conf_file" >/dev/null
+        current_value=$(sysctl -n "$conf_key" 2>/dev/null || true)
+    fi
+
+    if [[ "$current_value" == "$conf_value" ]]; then
+        msg_success "AppArmor user namespace compatibility is enabled."
+    else
+        msg_warn "Unable to confirm ${conf_key}=${conf_value}. You may need to apply it manually or reboot."
+    fi
+}
+
 check_sudo() {
     if [[ $EUID -ne 0 ]]; then
         if ! command_exists sudo; then
@@ -72,6 +111,7 @@ install_system_deps() {
     fi
 
     msg_info "Detected OS: $os_name"
+    configure_apparmor_userns "$os_name"
 
     case "$os_name" in
         ubuntu|debian)
