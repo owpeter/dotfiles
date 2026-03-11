@@ -14,6 +14,22 @@ CYAN='\033[0;36m'
 RED='\033[0;31m'
 NC='\033[0m'
 
+require_cmd() {
+    if ! command -v "$1" >/dev/null 2>&1; then
+        echo -e "${RED}Error: Required command '$1' not found.${NC}"
+        exit 1
+    fi
+}
+
+run_hm() {
+    if command -v home-manager >/dev/null 2>&1; then
+        home-manager "$@"
+    else
+        echo -e "${YELLOW}--> 'home-manager' command not found. Using temporary runner via nix...${NC}"
+        nix run github:nix-community/home-manager -- "$@"
+    fi
+}
+
 usage() {
     echo -e "Usage: dtf [COMMAND]"
     echo -e "\nA friendly manager for your Nix dotfiles.\n"
@@ -21,6 +37,7 @@ usage() {
     echo -e "  ${GREEN}a, apply${NC}        Apply the Home Manager configuration."
     echo -e "  ${GREEN}s, sync${NC}         Pull latest changes from git and then apply."
     echo -e "  ${GREEN}u, update${NC}       Update flake inputs (nixpkgs, etc.)."
+    echo -e "  ${GREEN}i, init${NC}         Bootstrap Home Manager (install CLI) and apply."
     echo -e "  ${GREEN}r, rollback [N|list]${NC} Rollback to generation N, list generations, or go to previous."
     echo -e "  ${GREEN}e, edit${NC}         Open the dotfiles directory in your default editor."
     echo -e "  ${GREEN}p, push [msg]${NC}   Commit and push changes with an optional message."
@@ -40,6 +57,7 @@ rollback_usage() {
 }
 
 cd "$DOTFILES_DIR"
+require_cmd nix
 
 if [ -z "$1" ]; then
     usage
@@ -49,7 +67,7 @@ fi
 case "$1" in
     a|apply|switch)
         echo -e "${CYAN}--> Applying Home Manager configuration...${NC}"
-        home-manager switch --flake .#default --impure
+        run_hm switch --flake .#default --impure
         echo -e "${GREEN}--> Configuration applied successfully! A new generation was created.${NC}"
         ;;
 
@@ -57,7 +75,7 @@ case "$1" in
         echo -e "${CYAN}--> Syncing repository by pulling latest changes...${NC}"
         git pull
         echo -e "\n${CYAN}--> Applying Home Manager configuration...${NC}"
-        home-manager switch --flake .#default --impure
+        run_hm switch --flake .#default --impure
         echo -e "${GREEN}--> Sync and apply completed successfully!${NC}"
         ;;
 
@@ -67,16 +85,22 @@ case "$1" in
         echo -e "${GREEN}--> Flake inputs updated. Run 'dtf apply' to use them.${NC}"
         ;;
 
+    i|init|bootstrap)
+        echo -e "${CYAN}--> Bootstrapping Home Manager from flake...${NC}"
+        run_hm switch --flake .#default --impure
+        echo -e "${GREEN}--> Bootstrap completed successfully!${NC}"
+        ;;
+
     r|rollback)
         case "$2" in
             "") # No argument: simple rollback
                 echo -e "${CYAN}--> Rolling back to the previous generation...${NC}"
-                home-manager switch --rollback
+                run_hm switch --rollback
                 echo -e "${GREEN}--> Rollback successful!${NC}"
                 ;;
             list) # List generations
                 echo -e "${CYAN}--> Available Home Manager generations:${NC}"
-                home-manager generations
+                run_hm generations
                 ;;
             *[!0-9]*) # Argument is not a number
                 echo -e "${RED}Error: Invalid argument for rollback. Must be a number or 'list'.${NC}\n"
@@ -86,7 +110,7 @@ case "$1" in
             *) # Argument is a number
                 echo -e "${CYAN}--> Switching to generation $2...${NC}"
                 # CORRECTED COMMAND: No flake needed when switching to an existing generation
-                home-manager switch --generation "$2"
+                run_hm switch --generation "$2"
                 echo -e "${GREEN}--> Switched to generation $2 successfully!${NC}"
                 ;;
         esac

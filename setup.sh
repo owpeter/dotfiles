@@ -277,7 +277,7 @@ gen() {
 
 cold() {
     ui_info "Applying Home Manager configuration for the first time..."
-    /bin/bash resources/scripts/dtf apply
+    /bin/bash resources/scripts/dtf init
 }
 
 if [ ! -f "$REQUIRES_SCRIPT" ]; then
