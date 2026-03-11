@@ -5,7 +5,14 @@
 #
 # ==============================================================================
 
-set -e
+# Check for -e flag for debug mode
+if [[ "$1" == "-e" ]]; then
+    set -ex
+    shift
+else
+    set -e
+fi
+
 
 USER_SECRETS="${HOME}/.config/dotfiles/secrets.nix"
 SYSTEM_SECRETS="/etc/dotfiles/secrets.nix"
@@ -52,6 +59,9 @@ usage() {
     echo -e "  ${GREEN}p, push [msg]${NC}   Commit and push changes with an optional message."
     echo -e "  ${GREEN}st, status${NC}      Show the git status of the dotfiles repository."
     echo -e "  ${GREEN}gc, clean${NC}       Run Nix garbage collection to clean old generations."
+    echo -e "  ${GREEN}dif, diff${NC}             Show the git difference of the dotfiles repository."
+    echo -e "  ${GREEN}git [args...]${NC}   Execute git commands in the dotfiles directory."
+    echo -e "  ${GREEN}gc, clean${NC}       Run Nix garbage collection to clean old generations."
     echo -e "  ${GREEN}h, help${NC}         Show this help message."
     echo
 }
@@ -74,6 +84,12 @@ if [ -z "$1" ]; then
 fi
 
 case "$1" in
+    c|config)
+        echo -e "${CYAN}--> Reconfig nix-darwin...${NC}"
+        /bin/bash "$SETUP_SCRIPT"
+        echo -e "${GREEN}--> Configuration complete!${NC}"
+        ;;
+
     a|apply|switch)
         echo -e "${CYAN}--> Applying Home Manager configuration...${NC}"
         run_hm switch --flake .#default --impure
@@ -132,18 +148,69 @@ case "$1" in
 
     p|push)
         commit_msg="${2:-"chore: update configuration"}"
-        echo -e "${CYAN}--> Committing and pushing changes...${NC}"
-        git add .
-        git commit -m "$commit_msg"
-        git push
-        echo -e "${GREEN}--> Changes pushed successfully!${NC}"
+        remote="${3}"
+        current_branch=$(git branch --show-current)
+        
+        if ! git diff-index --quiet HEAD --; then
+            # Has uncommitted changes, stage and commit them
+            git add .
+            if [ -z "$remote" ]; then
+                echo -e "${CYAN}--> Committing and pushing changes to upstream...${NC}"
+                git commit -m "$commit_msg"
+                git push
+            else
+                echo -e "${CYAN}--> Committing and pushing changes to ${remote}/${current_branch}...${NC}"
+                git commit -m "$commit_msg"
+                git push "$remote" "$current_branch"
+            fi
+            echo -e "${GREEN}--> Changes pushed successfully!${NC}"
+        else
+            # No staged changes, check if local branch is ahead of remote
+            if [ -z "$remote" ]; then
+                # Use default upstream
+                if git rev-parse @{u} > /dev/null 2>&1; then
+                    local_commits=$(git rev-list --count @{u}..HEAD 2>/dev/null || echo "0")
+                    if [ "$local_commits" -gt 0 ]; then
+                        echo -e "${CYAN}--> Pushing $local_commits local commit(s) to upstream...${NC}"
+                        git push
+                        echo -e "${GREEN}--> Changes pushed successfully!${NC}"
+                    else
+                        echo -e "${YELLOW}--> Nothing to push. Local branch is up to date with remote.${NC}"
+                    fi
+                else
+                    echo -e "${YELLOW}--> No upstream branch configured. Use: git push -u origin ${current_branch}${NC}"
+                fi
+            else
+                # Check against specified remote
+                remote_ref="${remote}/${current_branch}"
+                if git rev-parse "$remote_ref" > /dev/null 2>&1; then
+                    local_commits=$(git rev-list --count "${remote_ref}..HEAD" 2>/dev/null || echo "0")
+                    if [ "$local_commits" -gt 0 ]; then
+                        echo -e "${CYAN}--> Pushing $local_commits local commit(s) to ${remote}/${current_branch}...${NC}"
+                        git push "$remote" "$current_branch"
+                        echo -e "${GREEN}--> Changes pushed successfully!${NC}"
+                    else
+                        echo -e "${YELLOW}--> Nothing to push. Local branch is up to date with ${remote_ref}.${NC}"
+                    fi
+                else
+                    echo -e "${CYAN}--> Creating new branch on ${remote}/${current_branch}...${NC}"
+                    git push "$remote" "$current_branch"
+                    echo -e "${GREEN}--> Branch pushed successfully!${NC}"
+                fi
+            fi
+        fi
         ;;
 
     st|status)
-        echo -e "${CYAN}--> Git status for dotfiles:${NC}"
         git status
         ;;
-
+    d|dif|diff)
+        git diff
+        ;;
+    git)
+        shift
+        git "$@"
+        ;;
     gc|clean)
         echo -e "${CYAN}--> Cleaning up old Nix generations...${NC}"
         nix-collect-garbage -d
