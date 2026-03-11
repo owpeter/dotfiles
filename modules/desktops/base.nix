@@ -24,6 +24,7 @@ in
     wechat
     feishu
     wemeet
+    todesk
     google-chrome
     snipaste
 
