@@ -346,5 +346,11 @@ if ui_confirm "Do you want to apply the configuration now?"; then
     cold
 fi
 
+if command -v gh; then
+    if ui_confirm "Do you want to login the github?"; then
+        gh auth login
+    fi
+fi
+
 ui_header "Setup Finished"
 ui_info "Your dotfiles are ready. You may need to restart your shell."
