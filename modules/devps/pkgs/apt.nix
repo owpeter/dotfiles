@@ -5,7 +5,7 @@
 #
 #
 ###################################
-{ lib, aLib, ... }:
+{ lib, sys, ... }:
 
 let 
   systempkgs = [
@@ -14,12 +14,10 @@ let
   ];
 in
 {
-  home.activation.installSystemPkgs = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    ${aLib.initSudoPwd}
-    ${aLib.esudoFn}
-    if [ -z $DRY_RUN_CMD ]; then
-      esudo ${aLib.cmds.apt} update
-      esudo ${aLib.cmds.apt} install -y ${builtins.concatStringsSep " " systempkgs}
-    fi
-  '';
+  home.activation.installSystemPkgs = sys.task.root {
+    script = ''
+      esudo ${sys.cmds.apt} update
+      esudo ${sys.cmds.apt} install -y ${builtins.concatStringsSep " " systempkgs}
+    '';
+  };
 }

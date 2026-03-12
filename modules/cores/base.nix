@@ -6,8 +6,13 @@
 #
 ###################################
 
-{ pkgs, config, secrets, lib, isDesktop, aLib, ... }:
+{ pkgs, config, secrets, lib, isDesktop, sys, ... }:
 
+let
+  nixCustomConfig = {
+    trusted-users = "root ${secrets.home.user}";
+  };
+in
 {
     home.packages = with pkgs; [
     # base
@@ -54,17 +59,14 @@
     substituters = https://mirrors.ustc.edu.cn/nix-channels/store https://cache.nixos.org/
   '';
 
-  home.activation.setupNixConfig = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    ${aLib.initSudoPwd}
-    ${aLib.esudoFn}
-    CONTENT="trusted-users = root ${secrets.home.user}"
-    if [ -z $DRY_RUN_CMD ]; then
-      if ${pkgs.gnugrep}/bin/grep -qF "$CONTENT" /etc/nix/nix.custom.conf; then
-        echo "Content already exists in /etc/nix/nix.custom.conf"
-      else
-        esudo ${aLib.cmds.sh} -c "echo '$CONTENT' >> /etc/nix/nix.custom.conf"
-        esudo ${aLib.cmds.systemctl} restart nix-daemon
-      fi
-    fi
-  '';
+  home.activation.setupNixConfig = sys.config.activation {
+    name = "nix.custom.conf";
+    format = "kvEq";
+    data = nixCustomConfig;
+    target = "/etc/nix/nix.custom.conf";
+    mode = "0644";
+    post = ''
+      esudo ${sys.cmds.systemctl} restart nix-daemon
+    '';
+  };
 }

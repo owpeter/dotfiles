@@ -1,4 +1,4 @@
-{ pkgs, config, lib, secrets, aLib, ... }:
+{ pkgs, config, lib, secrets, sys, ... }:
 
 {
   home.packages = with pkgs; [
@@ -30,36 +30,37 @@
       - defaults
   '';
 
-  home.activation.installNativeDocker = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    ${aLib.initSudoPwd}
-    ${aLib.esudoFn}
-    if [ ! -e $HOME/.config/dotfiles/docker.installed ]; then
-      echo "No Docker found, installing..."
-      echo "Password is $SUDO_PWD"
-      $DRY_RUN_CMD ${pkgs.curl}/bin/curl -fsSL https://get.docker.com -o /tmp/get-docker.sh      
-      $DRY_RUN_CMD esudo ${aLib.cmds.sh} /tmp/get-docker.sh --mirror Aliyun
-      $DRY_RUN_CMD esudo ${aLib.cmds.usermod} -aG docker ${secrets.home.user}
-      if [ -z "$DRY_RUN_CMD" ]; then
-        if id -nG "${secrets.home.user}" | grep -qw "docker"; then
-            echo "To use Docker without sudo in this terminal, you must run: 'newgrp docker'"
-        fi
-      else
-        echo "Docker installation and user modification dry-run completed."
-      fi
-      echo "Docker installed successfully!"
-      $DRY_RUN_CMD ${aLib.cmds.touch} $HOME/.config/dotfiles/docker.installed
-    else
-      if [ -z "$DRY_RUN_CMD" ]; then
-        if id -nG "${secrets.home.user}" | grep -qw "docker"; then
-          echo "Docker All right."
+  home.activation.installNativeDocker = sys.task.root {
+    guardDryRun = false;
+    script = ''
+      if [ ! -e $HOME/.config/dotfiles/docker.installed ]; then
+        echo "No Docker found, installing..."
+        echo "Password is $SUDO_PWD"
+        $DRY_RUN_CMD ${pkgs.curl}/bin/curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
+        $DRY_RUN_CMD esudo ${sys.cmds.sh} /tmp/get-docker.sh --mirror Aliyun
+        $DRY_RUN_CMD esudo ${sys.cmds.usermod} -aG docker ${secrets.home.user}
+        if [ -z "$DRY_RUN_CMD" ]; then
+          if id -nG "${secrets.home.user}" | grep -qw "docker"; then
+              echo "To use Docker without sudo in this terminal, you must run: 'newgrp docker'"
+          fi
         else
-          esudo ${aLib.cmds.usermod} -aG docker ${secrets.home.user}
+          echo "Docker installation and user modification dry-run completed."
         fi
+        echo "Docker installed successfully!"
+        $DRY_RUN_CMD ${sys.cmds.touch} $HOME/.config/dotfiles/docker.installed
       else
-        echo "Docker installation and user modification dry-run completed."
+        if [ -z "$DRY_RUN_CMD" ]; then
+          if id -nG "${secrets.home.user}" | grep -qw "docker"; then
+            echo "Docker All right."
+          else
+            esudo ${sys.cmds.usermod} -aG docker ${secrets.home.user}
+          fi
+        else
+          echo "Docker installation and user modification dry-run completed."
+        fi
+        echo "Docker found, skipping installation."
       fi
-      echo "Docker found, skipping installation."
-    fi
-  '';
+    '';
+  };
 
 }

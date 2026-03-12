@@ -1,23 +1,25 @@
-{ lib, pkgs, aLib, ... }:
+{ lib, pkgs, sys, ... }:
 
+let
+  sshdConfig = {
+    PasswordAuthentication = "no";
+    PubkeyAuthentication = "yes";
+  };
+
+in
 {
-  home.activation.setupSshd = lib.hm.dag.entryAfter ["installSystemPkgs"] ''
-    ${aLib.initSudoPwd}
-    ${aLib.esudoFn}
-    SSHD_CONFIG="/etc/ssh/sshd_config"
-    if [ -z $DRY_RUN_CMD ]; then
-      echo "Configuring sshd..."
-      if ! ${pkgs.gnugrep}/bin/grep -q "^PasswordAuthentication no" "$SSHD_CONFIG"; then
-        esudo ${pkgs.gnused}/bin/sed -i \
-          's/^#\?PasswordAuthentication.*/PasswordAuthentication no/' "$SSHD_CONFIG"
-      fi
-      if ! ${pkgs.gnugrep}/bin/grep -q "^PubkeyAuthentication yes" "$SSHD_CONFIG"; then
-        esudo ${pkgs.gnused}/bin/sed -i \
-          's/^#\?PubkeyAuthentication.*/PubkeyAuthentication yes/' "$SSHD_CONFIG"
-      fi
-      echo "Enabling and starting sshd..."
-      esudo ${aLib.cmds.systemctl} enable --now ssh
+  home.activation.setupSshd = sys.config.activation {
+    after = [ "installSystemPkgs" ];
+    name = "sshd_config";
+    format = "kv";
+    data = sshdConfig;
+    target = "/etc/ssh/sshd_config.d/99-dotfiles.conf";
+    mode = "0644";
+    message = "Configuring sshd...";
+    post = ''
+      esudo ${sys.cmds.systemctl} enable --now ssh
+      esudo ${sys.cmds.systemctl} restart ssh
       echo "sshd setup complete."
-    fi
-  '';
+    '';
+  };
 }
