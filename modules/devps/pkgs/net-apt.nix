@@ -1,4 +1,4 @@
-{ pkgs, config, secrets, lib, isDesktop, ... }:
+{ pkgs, lib, isDesktop, aLib, ... }:
 
 let 
   systempkgs = [
@@ -11,22 +11,8 @@ let
 in
 {
   home.activation.installNetworkSystemPkgs = lib.mkIf isDesktop (lib.hm.dag.entryAfter ["writeBoundary"] ''
-    SECRET_FILE="$HOME/.config/dotfiles/secrets.nix"
-    if [ ! -f "$SECRET_FILE" ]; then
-      echo "No password file found at $SECRET_FILE."
-      exit 0
-    fi
-    
-    SUDO_PWD=$(${pkgs.gnugrep}/bin/grep -w "home\.passwd" "$SECRET_FILE" | sed -n "s/.*home\.passwd[[:space:]]*=[[:space:]]*\"\([^\"]*\)\".*/\1/p" | head -n 1)      
-    if [ -z "$SUDO_PWD" ]; then
-      echo "Failed to extract password from $SECRET_FILE."
-      exit 1
-    fi
-
-    HOST_SUDO="/usr/bin/sudo"
-    HOST_APT="/usr/bin/apt"
-    HOST_DPKG="/usr/bin/dpkg"
-    HOST_DPKG_QUERY="/usr/bin/dpkg-query"
+    ${aLib.initSudoPwd}
+    ${aLib.esudoFn}
     RAW_PKGS=(${pkgStrings})
     DOWNLOAD_LIST=""
 
@@ -36,7 +22,7 @@ in
       for item in "''${RAW_PKGS[@]}"; do
         CMD=''${item%%|*}
         URL=''${item#*|}
-        if ! $HOST_DPKG_QUERY -W -f='$'"{Status}" "$CMD" | grep -q "ok installed"; then
+        if ! ${aLib.cmds.dpkgQuery} -W -f='$'"{Status}" "$CMD" | grep -q "ok installed"; then
           echo "Command '$CMD' not found. Preparing to install from $URL..."
           filename=$(basename "$URL")
           target="$TEMP_DIR/$filename"
@@ -47,8 +33,8 @@ in
         fi
       done
       if [ -n "$DOWNLOAD_LIST" ]; then
-        echo "$SUDO_PWD" | $HOST_SUDO -S $HOST_APT update
-        echo "$SUDO_PWD" | $HOST_SUDO -S $HOST_APT install -y $DOWNLOAD_LIST
+        esudo ${aLib.cmds.apt} update
+        esudo ${aLib.cmds.apt} install -y $DOWNLOAD_LIST
       fi
 
       rm -rf "$TEMP_DIR"

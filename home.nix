@@ -13,6 +13,7 @@ in
   imports = [
     ./modules/cores
     ./modules/devps
+    ./modules/libs
   ] ++ lib.optionals isDesktop [
     ./modules/desktops
   ];
