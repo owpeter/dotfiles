@@ -46,6 +46,18 @@ in
     sunshineAutostartDesktop
   ];
 
+  home.file.".mac_screen".text = ''
+    add 2560 1664 60
+    switch 2560x1664_60_User
+    scale 200
+    text-scale 1.1
+  '';
+  home.file.".no_screen".text = ''
+    text-scale 1.0
+  '';
+
+  home.file.".screen".source = config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.mac_screen";
+
   home.activation.setupSunshineInput = sys.task.root {
     message = "Setting up Sunshine uinput permissions...";
     script = ''
