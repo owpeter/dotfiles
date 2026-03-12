@@ -1,7 +1,7 @@
 { pkgs, lib, config, secrets, isDesktop, ... }:
 
 {
-    programs.zsh = {
+  programs.zsh = {
     enable = true;
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
@@ -51,6 +51,10 @@
       
       ${builtins.readFile ../../files/zsh/opt.zsh}
       ${builtins.readFile ../../files/zsh/func.zsh}
+
+      unset XCURSOR_PATH
+      unset XCURSOR_THEME
+      unset XCURSOR_SIZE
     '';
   };
   
@@ -64,7 +68,7 @@
         echo "Adding $zsh_path to /etc/shells"
         echo "$zsh_path" | /usr/bin/sudo tee -a /etc/shells > /dev/null
       fi
-      /usr/bin/sudo chsh -s "$zsh_path" $USER
+      /usr/bin/sudo chsh -s "$zsh_path" ${secrets.home.user}
       echo "Default shell changed to Zsh. Please relogin."
     fi
   '';
