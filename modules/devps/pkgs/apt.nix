@@ -10,6 +10,7 @@
 let 
   systempkgs = [
     "cifs-utils"
+    "openssh-server"
   ];
 in
 {
@@ -25,7 +26,6 @@ in
       exit 1
     fi
     HOST_SUDO="/usr/bin/sudo"
-    HOST_SH="/bin/sh"
     HOST_APT="/usr/bin/apt"
     if [ -z $DRY_RUN_CMD ]; then
       echo "$SUDO_PWD" | $HOST_SUDO -S $HOST_APT update
