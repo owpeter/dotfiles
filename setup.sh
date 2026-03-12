@@ -157,6 +157,14 @@ read -r -d '' CONFIG_JSON << 'EOF' || true
   },
   {
     "group": "BASE",
+    "path": "home.desktop",
+    "prompt": "Desktop Option",
+    "condition": "[[ \"$(get_val home.option)\" != \"server\" ]]",
+    "defaultCmd": "echo 'none'",
+    "choices": ["all", "gnome", "niri", "none"]
+  },
+  {
+    "group": "BASE",
     "path": "home.user",
     "prompt": "System username",
     "defaultCmd": "whoami",
