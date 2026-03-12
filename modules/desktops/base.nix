@@ -12,7 +12,6 @@ in
     # apps
     kdePackages.okular
     pavucontrol
-    wechat
     feishu
     wemeet
     todesk
@@ -25,7 +24,14 @@ in
   ];
 
   xdg.autostart.enable = true;
-  xdg.autostart.entries = [
-    "${pkgs.wechat}/share/applications/wechat.desktop"
-  ];
+  xdg.desktopEntries = {
+    wechat = {
+      name = "WeChat";
+      comment = "WeChat Desktop App";
+      exec = "usr/bin/wechat";
+      icon = "wechat"; 
+      terminal = false;
+      categories = [ "Utility" ];
+    };
+  };
 }
