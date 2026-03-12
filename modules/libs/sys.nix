@@ -12,6 +12,9 @@ let
       touch = "/usr/bin/touch";
       dpkg = "/usr/bin/dpkg";
       dpkgQuery = "/usr/bin/dpkg-query";
+      udevadm = "/usr/bin/udevadm";
+      modprobe = "/usr/sbin/modprobe";
+      setcap = "/usr/sbin/setcap";
       install = "/usr/bin/install";
       cmp = "/usr/bin/cmp";
       mktemp = "/usr/bin/mktemp";

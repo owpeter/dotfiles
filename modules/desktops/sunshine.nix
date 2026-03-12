@@ -1,6 +1,7 @@
-{ pkgs, config, lib, ... }:
+{ pkgs, config, lib, sys, ... }:
 
 let
+  sunshineExec = "${pkgs.nixgl.auto.nixGLDefault}/bin/nixGL ${pkgs.sunshine}/bin/sunshine";
   sunshineAutostartDesktop = pkgs.runCommand "sunshine-autostart-desktop" {} ''
     mkdir -p $out/share/applications
     cp ${../../files/remote/sunshine.desktop} $out/share/applications/sunshine.desktop
@@ -9,6 +10,7 @@ in
 {
   home.packages = with pkgs; [
     sunshine
+    nixgl.auto.nixGLDefault
   ];
   systemd.user.services.sunshine = {
     Unit = {
@@ -18,7 +20,7 @@ in
     };
 
     Service = {
-      ExecStart = "${pkgs.sunshine}/bin/sunshine";
+      ExecStart = sunshineExec;
       Environment = [
         "DISPLAY=:0"
         "XAUTHORITY=%h/.Xauthority"
@@ -43,4 +45,38 @@ in
   xdg.autostart.entries = [
     sunshineAutostartDesktop
   ];
+
+  home.activation.setupSunshineInput = sys.task.root {
+    message = "Setting up Sunshine uinput permissions...";
+    script = ''
+      ${sys.deploy {
+        name = "85-sunshine-input.rules";
+        format = "lines";
+        data = [
+          ''KERNEL=="uinput", GROUP="input", MODE="0660", OPTIONS+="static_node=uinput"''
+          ''KERNEL=="uhid", GROUP="input", MODE="0660", OPTIONS+="static_node=uhid"''
+        ];
+        target = "/etc/udev/rules.d/85-sunshine-input.rules";
+        mode = "0644";
+      }}
+
+      ${sys.deploy {
+        name = "uinput.conf";
+        format = "lines";
+        data = [ "uinput" "uhid" ];
+        target = "/etc/modules-load.d/uinput.conf";
+        mode = "0644";
+      }}
+
+      if ! id -nG "${config.home.username}" | grep -qw input; then
+        esudo ${sys.cmds.usermod} -aG input ${config.home.username}
+      fi
+
+      esudo ${sys.cmds.modprobe} uinput
+      esudo ${sys.cmds.modprobe} uhid
+      esudo ${sys.cmds.udevadm} control --reload-rules
+      esudo ${sys.cmds.udevadm} trigger
+
+    '';
+  };
 }
