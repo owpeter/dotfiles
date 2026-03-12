@@ -6,6 +6,7 @@ let
       sudo = "/usr/bin/sudo";
       sh = "/bin/sh";
       apt = "/usr/bin/apt";
+      grep = "${pkgs.gnugrep}/bin/grep";
       systemctl = "/usr/bin/systemctl";
       usermod = "/usr/sbin/usermod";
       touch = "/usr/bin/touch";
