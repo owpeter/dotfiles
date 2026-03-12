@@ -1,7 +1,7 @@
-{ pkgs, ... }:
+{ pkgs, lib, isDesktop, ... }:
 
 {
-  programs.vscode = {
+  programs.vscode = lib.mkIf isDesktop {
     enable = true;
     package = pkgs.vscode;
   };

@@ -150,6 +150,13 @@ read -r -d '' CONFIG_JSON << 'EOF' || true
 [
   {
     "group": "BASE",
+    "path": "home.option",
+    "prompt": "System Option",
+    "defaultCmd": "echo \"desktop\"",
+    "choices": ["desktop", "server"]
+  },
+  {
+    "group": "BASE",
     "path": "home.user",
     "prompt": "System username",
     "defaultCmd": "whoami",

@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 let 
   path = builtins.getEnv "HOME";
@@ -7,18 +7,20 @@ let
     if builtins.pathExists (secretsPath)
     then import (secretsPath)
     else {};
+  isDesktop = (secrets.home.option or "desktop") == "desktop";
 in
 {
   imports = [
     ./modules/cores
-    ./modules/desktops
     ./modules/devps
+  ] ++ lib.optionals isDesktop [
+    ./modules/desktops
   ];
   config = {
     home.username = secrets.home.user;
     home.homeDirectory = secrets.home.dir;
     home.stateVersion = "25.11";
-    home.pointerCursor = {
+    home.pointerCursor = lib.mkIf isDesktop {
       name = "Yaru";
       package = pkgs.yaru-theme;
       size = 24;
@@ -26,6 +28,7 @@ in
       gtk.enable = true;
     };
     _module.args.secrets = secrets;
+    _module.args.isDesktop = isDesktop;
     programs.home-manager.enable = true;
   };
 }

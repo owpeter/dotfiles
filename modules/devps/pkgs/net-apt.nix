@@ -1,4 +1,4 @@
-{ pkgs, config, secrets, lib, ... }: 
+{ pkgs, config, secrets, lib, isDesktop, ... }:
 
 let 
   systempkgs = [
@@ -10,7 +10,7 @@ let
   pkgStrings = lib.concatMapStringsSep " " (obj: "\"${obj.cmd}|${obj.url}\"") systempkgs;
 in
 {
-  home.activation.installNetworkSystemPkgs = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  home.activation.installNetworkSystemPkgs = lib.mkIf isDesktop (lib.hm.dag.entryAfter ["writeBoundary"] ''
     SECRET_FILE="$HOME/.config/dotfiles/secrets.nix"
     if [ ! -f "$SECRET_FILE" ]; then
       echo "No password file found at $SECRET_FILE."
@@ -53,5 +53,5 @@ in
 
       rm -rf "$TEMP_DIR"
     fi
-  '';
+  '');
 }

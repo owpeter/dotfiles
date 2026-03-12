@@ -6,7 +6,7 @@
 #
 ###################################
 
-{ pkgs, config, secrets, lib, ... }: 
+{ pkgs, config, secrets, lib, isDesktop, ... }:
 
 {
     home.packages = with pkgs; [
@@ -30,16 +30,19 @@
     # tools
     unzip 
     jq 
-    xclip 
-    xsel
-    
+
     # opt 
     fzf 
     ripgrep 
     bat
     tree
     chsrc
-  ];
+  ] ++ lib.optionals isDesktop (with pkgs; [
+
+    # desktop
+    xclip
+    xsel
+  ]);
 
   home.file.".config/nixpkgs/config.nix".text = ''
     {

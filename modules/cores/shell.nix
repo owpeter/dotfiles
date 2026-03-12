@@ -1,4 +1,4 @@
-{ pkgs, lib, config, secrets, ... }:
+{ pkgs, lib, config, secrets, isDesktop, ... }:
 
 {
     programs.zsh = {
@@ -21,16 +21,17 @@
 
     sessionVariables = {
       LANG = "en_US.UTF-8";
-      EDITOR = "vim";
+      EDITOR = if isDesktop then "code" else "vim";
+      DOTFILES_DIR = secrets.dotfiles.path;
+    } // lib.optionalAttrs isDesktop {
       XMODIFIERS = "@im=fcitx";
       GTK_IM_MODULE = "fcitx";
       QT_IM_MODULE = "fcitx";
       SDL_IM_MODULE = "fcitx";
-      DOTFILES_DIR = secrets.dotfiles.path;
     };
 
     shellAliases = {
-      zshconf = "vim ${secrets.dotfiles.path}/modules/core.nix";
+      zshconf = "vim ${secrets.dotfiles.path}/modules/cores/shell.nix";
       omzconf = "vim ~/.oh-my-zsh";
       
       ll = "ls -alh";
