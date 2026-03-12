@@ -1,12 +1,6 @@
-{ config, pkgs, lib, ... }:
+{ config, pkgs, lib, secrets, ... }:
 
 let 
-  path = builtins.getEnv "HOME";
-  secretsPath = path + "/.config/dotfiles/secrets.nix";
-  secrets =
-    if builtins.pathExists (secretsPath)
-    then import (secretsPath)
-    else {};
   isDesktop = (secrets.home.option or "desktop") == "desktop";
 in
 {
@@ -28,7 +22,6 @@ in
       x11.enable = true;
       gtk.enable = true;
     };
-    _module.args.secrets = secrets;
     _module.args.isDesktop = isDesktop;
     programs.home-manager.enable = true;
   };

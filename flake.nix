@@ -18,10 +18,17 @@
         config.allowUnfree = true;
         overlays = [ nixgl.overlay ];
       };
+      path = builtins.getEnv "HOME";
+      secretsPath = path + "/.config/dotfiles/secrets.nix";
+      secrets =
+        if builtins.pathExists (secretsPath)
+        then import (secretsPath)
+        else {};
     in
     {
       homeConfigurations."default" = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
+        extraSpecialArgs = { inherit secrets; };
         modules = [ ./home.nix ];
       };
     };
