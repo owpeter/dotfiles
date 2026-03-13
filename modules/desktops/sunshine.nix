@@ -1,7 +1,6 @@
 { pkgs, config, lib, sys, ... }:
 
 let
-  sunshineExec = "${pkgs.nixgl.auto.nixGLDefault}/bin/nixGL ${pkgs.sunshine}/bin/sunshine";
   sunshineAutostartDesktop = pkgs.runCommand "sunshine-autostart-desktop" {} ''
     mkdir -p $out/share/applications
     cp ${../../files/remote/sunshine.desktop} $out/share/applications/sunshine.desktop
@@ -10,7 +9,6 @@ in
 {
   home.packages = with pkgs; [
     sunshine
-    nixgl.auto.nixGLDefault
   ];
   systemd.user.services.sunshine = {
     Unit = {
@@ -20,7 +18,7 @@ in
     };
 
     Service = {
-      ExecStart = sunshineExec;
+      ExecStart = "/usr/bin/sunshine";
       Environment = [
         "DISPLAY=:0"
         "XAUTHORITY=%h/.Xauthority"

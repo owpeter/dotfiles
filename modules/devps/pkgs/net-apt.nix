@@ -2,9 +2,15 @@
 
 let 
   systempkgs = [
+    # systempkgs both desktop and server use
+  ] ++ lib.optionals isDesktop [
     { 
       pkg = "wechat"; 
       url = "https://dldir1v6.qq.com/weixin/Universal/Linux/WeChatLinux_x86_64.deb"; 
+    }
+    {
+      pkg = "sunshine";
+      url = "https://github.com/LizardByte/Sunshine/releases/download/v2026.311.154809/sunshine-ubuntu-24.04-amd64.deb";
     }
   ];
   pkgStrings = lib.concatMapStringsSep " " (obj: "\"${obj.pkg}|${obj.url}\"") systempkgs;

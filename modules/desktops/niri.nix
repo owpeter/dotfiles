@@ -102,6 +102,7 @@ in
     }
 
     binds {
+      "F1" { spawn "ksnip" "-r"; }
       "F12" { spawn "niri-scratchpad" "-id" "quake-term" "-s" "alacritty --class quake-term" "-m"; }
       "Mod+Return" { spawn "alacritty"; }
       "Super+Space" { spawn "fuzzel"; }
@@ -145,6 +146,12 @@ in
     output "DP-3" {
       focus-at-startup
       scale 1.5
+    }
+
+    output "HDMI-A-1" {
+      mode custom=true "2560x1664@60"
+      scale 1.5
+      focus-at-startup
     }
   '';
   gtk = {
