@@ -149,8 +149,8 @@ in
     }
 
     output "HDMI-A-1" {
-      mode custom=true "2560x1664@60"
-      scale 1.5
+      mode custom=true "3200x2080@60"
+      scale 1.75
       focus-at-startup
     }
   '';
