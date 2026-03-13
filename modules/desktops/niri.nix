@@ -72,11 +72,13 @@ in
 
     window-rule {
       match title="^noctalia-.*"
+      match app-id="^quake-.*"
       open-floating true
       geometry-corner-radius 24
       focus-ring {
         off
       }
+      open-focused true
     }
 
     window-rule {
@@ -86,9 +88,12 @@ in
     }
 
     window-rule {
-      match app-id="qterm"
+      match app-id="quake-term"
       open-floating true
       opacity 0.8
+      focus-ring {
+        off
+      }
       default-floating-position x=0 y=0
       default-column-width { proportion 1.0; }
       default-window-height { proportion 1.0; }
@@ -97,7 +102,7 @@ in
     }
 
     binds {
-      "F12" { spawn "niri-scratchpad" "-id" "qterm" "-s" "alacritty --class qterm" "-m"; }
+      "F12" { spawn "niri-scratchpad" "-id" "quake-term" "-s" "alacritty --class quake-term" "-m"; }
       "Mod+Return" { spawn "alacritty"; }
       "Super+Space" { spawn "fuzzel"; }
       "Mod+Q" { close-window; }
@@ -124,6 +129,17 @@ in
       "Mod+3" { focus-workspace 3; }
       "Mod+Shift+1" { move-column-to-workspace 1; }
       "Mod+Shift+2" { move-column-to-workspace 2; }
+
+      "Mod+Comma" { consume-or-expel-window-left; }
+      
+      "Mod+Period" { consume-or-expel-window-right; }
+      "Mod+Up"   { focus-window-up; }
+      "Mod+Down" { focus-window-down; }
+      "Mod+J"   { focus-window-up; }
+      "Mod+K" { focus-window-down; }
+      "Mod+Shift+Up"   { move-window-up; }
+      "Mod+Shift+Down" { move-window-down; }
+      "Mod+W" { toggle-column-tabbed-display; }
     }
 
     output "DP-3" {
