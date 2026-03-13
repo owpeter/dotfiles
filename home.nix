@@ -28,6 +28,7 @@ in
       XMODIFIERS = "@im=fcitx";
       SDL_IM_MODULE = "fcitx";
       GLFW_IM_MODULE = "ibus";
+      XDG_DATA_DIRS = "$GSETTINGS_SCHEMAS_PATH:$XDG_DATA_DIRS";
     };
     _module.args.isDesktop = isDesktop;
     programs.home-manager.enable = true;

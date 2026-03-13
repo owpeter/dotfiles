@@ -10,6 +10,7 @@ in
     slurp
     grim
     swappy
+    nixgl.auto.nixGLDefault
 
     # apps
     kdePackages.okular

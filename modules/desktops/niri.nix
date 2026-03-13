@@ -3,6 +3,22 @@
 
 let
   wallpaperPath = ../../resources/images/background.jpg;
+  niri-wrapper = pkgs.writeShellScriptBin "start-niri-desktop" ''
+    export XDG_SESSION_TYPE=wayland
+    export XDG_CURRENT_DESKTOP=niri
+    export XDG_SESSION_DESKTOP=niri
+    export MOZ_ENABLE_WAYLAND=1
+    export QT_QPA_PLATFORM="wayland;xcb"
+    [ -f /etc/profile ] && . /etc/profile
+    [ -f "$HOME/.profile" ] && . "$HOME/.profile"
+    [ -f "$HOME/.bash_profile" ] && . "$HOME/.bash_profile"
+    if [ -f "${config.home.profileDirectory}/etc/profile.d/hm-session-vars.sh" ]; then
+      . "${config.home.profileDirectory}/etc/profile.d/hm-session-vars.sh"
+    fi
+    ${pkgs.systemd}/bin/systemctl --user import-environment PATH XDG_SESSION_TYPE XDG_CURRENT_DESKTOP XDG_SESSION_DESKTOP MOZ_ENABLE_WAYLAND
+    ${pkgs.dbus}/bin/dbus-update-activation-environment --systemd --all
+    exec ${pkgs.nixgl.auto.nixGLDefault}/bin/nixGL ${pkgs.niri}/bin/niri > "$HOME/niri.log" 2>&1
+  '';
   niriDesktop = [
     {
       format = "plain";
@@ -14,7 +30,7 @@ let
         "Desktop Entry" = {
           Name = "niri";
           Comment = "A scrollable-tiling Wayland compositor";
-          Exec = "sh -c 'dbus-run-session nixGL ${pkgs.niri}/bin/niri > /tmp/niri.log 2>&1'";
+          Exec = "${niri-wrapper}/bin/start-niri-desktop";
           Type = "Application";
           DesktopNames = "niri";
         };
@@ -36,13 +52,13 @@ in
 
   xdg.configFile."niri/config.kdl".text = ''
 
-    spawn-at-startup "noctalia-shell"
-    spawn-at-startup "xwayland-satellite"
-    spawn-at-startup "swaybg" "-m" "fill" "-i" "${wallpaperPath}"
-    spawn-at-startup "dbus-update-activation-environment" "--all"
-    spawn-at-startup "gnome-keyring-daemon" "--start" "--components=secrets"
-    spawn-at-startup "fcitx5" "-d"
-    spawn-at-startup "dex" "-a" "-s" "~/.config/autostart:/etc/xdg/autostart"
+    spawn-at-startup "${pkgs.noctalia-shell}/bin/noctalia-shell"
+    spawn-at-startup "${pkgs.xwayland-satellite}/bin/xwayland-satellite"
+    spawn-at-startup "${pkgs.swaybg}/bin/swaybg" "-m" "fill" "-i" "${wallpaperPath}"
+    spawn-at-startup "/usr/bin/dbus-update-activation-environment" "--all"
+    spawn-at-startup "/usr/bin/gnome-keyring-daemon" "--start" "--components=secrets"
+    spawn-at-startup "${config.home.profileDirectory}/bin/fcitx5" "-d"
+    spawn-at-startup "${pkgs.dex}/bin/dex" "-a" "-s" "~/.config/autostart:/etc/xdg/autostart"
 
     workspace "scratch" {}
 
@@ -102,13 +118,13 @@ in
     }
 
     binds {
-      "F1" { spawn "screenshot"; }
-      "F12" { spawn "niri-scratchpad" "-id" "quake-term" "-s" "alacritty --class quake-term" "-m"; }
-      "Mod+Return" { spawn "alacritty"; }
-      "Super+Space" { spawn "fuzzel"; }
+      "F1" { spawn "${config.home.profileDirectory}/bin/screenshot"; }
+      "F12" { spawn "${config.home.profileDirectory}/bin/niri-scratchpad" "-id" "quake-term" "-s" "${pkgs.alacritty}/bin/alacritty --class quake-term" "-m"; }
+      "Mod+Return" { spawn "${pkgs.alacritty}/bin/alacritty"; }
+      "Super+Space" { spawn "${pkgs.fuzzel}/bin/fuzzel"; }
       "Mod+Q" { close-window; }
       "Mod+Shift+E" { quit; }
-      "Mod+V" { spawn "copyq" "toggle" ; }
+      "Mod+V" { spawn "${pkgs.copyq}/bin/copyq" "toggle" ; }
 
       "Mod+Left"  { focus-column-left; }
       "Mod+Right" { focus-column-right; }
@@ -165,6 +181,9 @@ in
       package = pkgs.yaru-theme;
     };
   };
+
+  xdg.configFile."xdg-desktop-portal/niri-portals.conf".source =  
+  "${pkgs.niri}/share/xdg-desktop-portal/niri-portals.conf";
 
   home.activation.niriStartUp = sys.config.activation {
     name = "niri.desktop";
