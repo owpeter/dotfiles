@@ -1,7 +1,6 @@
 { ... }:
 {
     imports = [
-        ./sys.nix
-        ./bins
+      ./py3bin.nix
     ];
 }

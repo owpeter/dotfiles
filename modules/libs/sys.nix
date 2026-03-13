@@ -52,7 +52,14 @@ let
       };
 
       renderedText = { format, data }:
-        if format == "ini" then renderers.ini data
+        if format == "concat" then
+          lib.concatMapStrings (
+            item:
+              if builtins.isAttrs item && item ? format && item ? data
+              then renderedText item
+              else throw "Invalid concat item: expected { format, data; }"
+          ) data
+        else if format == "ini" then renderers.ini data
         else if format == "yaml" then renderers.yaml data
         else if format == "json" then renderers.json data
         else if format == "toml" then renderers.toml data
