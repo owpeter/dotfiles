@@ -8,11 +8,11 @@ in
     ./fcitx.nix
     ./rime.nix
     ./font.nix
-    ./terminal.nix
     ./sunshine.nix
   ]
   ++ lib.optionals (desktop == "gnome" || desktop == "all") [
     ./gnome.nix
+    ./terminal.nix
   ]
   ++ lib.optionals (desktop == "niri" || desktop == "all") [
     ./niri.nix
