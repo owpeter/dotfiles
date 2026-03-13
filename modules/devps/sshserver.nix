@@ -2,7 +2,7 @@
 
 let
   sshdConfig = {
-    PasswordAuthentication = "no";
+    PasswordAuthentication = "yes";
     PubkeyAuthentication = "yes";
   };
 
