@@ -7,7 +7,9 @@ in
   home.packages = with pkgs; [
     # utils
     copyq
-    ksnip
+    slurp
+    grim
+    swappy
 
     # apps
     kdePackages.okular

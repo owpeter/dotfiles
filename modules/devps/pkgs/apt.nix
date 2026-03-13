@@ -5,12 +5,13 @@
 #
 #
 ###################################
-{ lib, sys, ... }:
+{ lib, sys, isDesktop, ... }:
 
 let 
   systempkgs = [
     "cifs-utils"
     "openssh-server"
+  ] ++ lib.optionals isDesktop [
   ];
   pkgStrings = lib.concatMapStringsSep " " (pkg: "\"${pkg}\"") systempkgs;
 in

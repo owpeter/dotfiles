@@ -102,7 +102,7 @@ in
     }
 
     binds {
-      "F1" { spawn "ksnip" "-r"; }
+      "F1" { spawn "screenshot"; }
       "F12" { spawn "niri-scratchpad" "-id" "quake-term" "-s" "alacritty --class quake-term" "-m"; }
       "Mod+Return" { spawn "alacritty"; }
       "Super+Space" { spawn "fuzzel"; }
