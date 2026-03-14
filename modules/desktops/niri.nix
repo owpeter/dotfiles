@@ -37,6 +37,14 @@ let
       };
     }
   ];
+  niriPortal = {
+    "preferred" = {
+      "default" = "gtk;";
+      "org.freedesktop.impl.portal.Access" = "gtk;";
+      "org.freedesktop.impl.portal.Notification" = "gtk;";
+      "org.freedesktop.impl.portal.Secrets" = "gnome-keyring;";
+    };
+  };
 in
 {
   home.packages = with pkgs; [
@@ -166,7 +174,7 @@ in
 
     output "HDMI-A-1" {
       mode custom=true "3200x2080@60"
-      scale 1.75
+      scale 2
       focus-at-startup
     }
   '';
@@ -182,8 +190,10 @@ in
     };
   };
 
-  xdg.configFile."xdg-desktop-portal/niri-portals.conf".source =  
-  "${pkgs.niri}/share/xdg-desktop-portal/niri-portals.conf";
+  # xdg.configFile."xdg-desktop-portal/niri-portals.conf".source =  
+  # "${pkgs.niri}/share/xdg-desktop-portal/niri-portals.conf";
+
+  xdg.configFile."xdg-desktop-portal/niri-portals.conf".text = lib.generators.toINI {} niriPortal;
 
   home.activation.niriStartUp = sys.config.activation {
     name = "niri.desktop";
