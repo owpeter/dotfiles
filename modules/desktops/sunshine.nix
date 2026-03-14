@@ -5,6 +5,7 @@ let
     mkdir -p $out/share/applications
     cp ${../../files/remote/sunshine.desktop} $out/share/applications/sunshine.desktop
   '';
+  sunshineExec = "${pkgs.nixgl.auto.nixGLDefault}/bin/nixGL ${pkgs.sunshine}/bin/sunshine";
 in
 {
   home.packages = with pkgs; [
@@ -18,7 +19,7 @@ in
     };
 
     Service = {
-      ExecStart = "/usr/bin/sunshine";
+      ExecStart = sunshineExec;
       Environment = [
         "DISPLAY=:0"
         "XAUTHORITY=%h/.Xauthority"
