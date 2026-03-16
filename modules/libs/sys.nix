@@ -19,6 +19,7 @@ let
       cmp = "/usr/bin/cmp";
       mktemp = "/usr/bin/mktemp";
       rm = "/usr/bin/rm";
+      curl = "${pkgs.curl}/bin/curl";
     };
 
     initSudoPwd = ''
@@ -38,6 +39,14 @@ let
         fi
       }
     '';
+
+    pkg = rec {
+      isInstalledFn = ''
+        pkg_installed() {
+          ${cmds.dpkgQuery} -W -f='$'"{Status}" "$1" 2>/dev/null | ${cmds.grep} -q "ok installed"
+        }
+      '';
+    };
 
     config = rec {
       renderers = {
@@ -163,6 +172,7 @@ let
       lib.hm.dag.entryAfter after ''
         ${lib.optionalString asRoot sys.initSudoPwd}
         ${lib.optionalString asRoot sys.esudoFn}
+        ${sys.pkg.isInstalledFn}
         ${lib.optionalString guardDryRun ''
           if [ -z "$DRY_RUN_CMD" ]; then
         ''}
