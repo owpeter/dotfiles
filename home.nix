@@ -30,6 +30,8 @@ in
       SDL_IM_MODULE = "fcitx";
       GLFW_IM_MODULE = "ibus";
       XDG_DATA_DIRS = "$GSETTINGS_SCHEMAS_PATH:$XDG_DATA_DIRS";
+      API_KEY = secrets.agent.apikey;
+      DASHSCOPE_API_KEY = secrets.agent.apikey;
     };
     _module.args.isDesktop = isDesktop;
     programs.home-manager.enable = true;

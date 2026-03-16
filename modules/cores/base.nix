@@ -42,6 +42,9 @@ in
     bat
     tree
     chsrc
+
+    # ai
+    claude-code
   ];
 
   home.file.".config/nixpkgs/config.nix".text = ''

@@ -18,11 +18,13 @@
         config.allowUnfree = true;
         overlays = [ nixgl.overlay ];
       };
-      path = builtins.getEnv "HOME";
-      secretsPath = path + "/.config/dotfiles/secrets.nix";
+      repoSecretsPath = ./secrets.nix;
+      homeSecretsPath = (builtins.getEnv "HOME") + "/.config/dotfiles/secrets.nix";
       secrets =
-        if builtins.pathExists (secretsPath)
-        then import (secretsPath)
+        if builtins.pathExists repoSecretsPath
+        then import repoSecretsPath
+        else if builtins.pathExists homeSecretsPath
+        then import homeSecretsPath
         else {};
     in
     {
