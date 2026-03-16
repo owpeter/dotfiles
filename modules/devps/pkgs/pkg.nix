@@ -17,29 +17,36 @@ let
 in
 {
   home.activation.installSystemPkgs = sys.task.root {
+    name = "system-pkgs";
     pre = ''
       RAW_PKGS=(${pkgStrings})
       MISSING_PKGS=""
+      log_debug "configured platform.pkgManager='${sys.platform.pkgManager}'"
     '';
     script = ''
+      PKG_MANAGER="$(detect_pkg_manager)"
+      log_debug "detected package manager: $PKG_MANAGER"
+      log_debug "total managed packages: ''${#RAW_PKGS[@]}"
+
       if [ ''${#RAW_PKGS[@]} -gt 0 ]; then
         for item in "''${RAW_PKGS[@]}"; do
           PKG="$item"
 
           if pkg_installed "$PKG"; then
-            echo "Package '$PKG' is already installed. Skipping."
+            log_info "'$PKG' already installed, skip."
             continue
           fi
 
-          echo "Package '$PKG' not found. install..."
+          log_warn "'$PKG' not found, queued for install."
           MISSING_PKGS="$MISSING_PKGS $PKG"
         done
 
         if [ -n "$MISSING_PKGS" ]; then
-          esudo ${sys.cmds.apt} update
-          esudo ${sys.cmds.apt} install -y $MISSING_PKGS
+          log_error "missing packages:$MISSING_PKGS"
+          pkg_update || true
+          pkg_install $MISSING_PKGS
         else
-          echo "All system packages already satisfied."
+          log_info "all packages satisfied, nothing to install."
         fi
       fi
     '';

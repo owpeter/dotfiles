@@ -2,6 +2,15 @@
 
 let
   sys = rec {
+    platform = {
+      pkgManager =
+        if builtins.pathExists "/usr/bin/apt" then "apt"
+        else if builtins.pathExists "/usr/bin/dnf" then "dnf"
+        else if builtins.pathExists "/usr/bin/pacman" then "pacman"
+        else if builtins.pathExists "/usr/bin/zypper" then "zypper"
+        else "unknown";
+    };
+
     cmds = {
       sudo = "/usr/bin/sudo";
       sh = "/bin/sh";
@@ -40,10 +49,152 @@ let
       }
     '';
 
+    logFn = ''
+      _log() {
+        LEVEL="$1"
+        shift
+        MSG="$*"
+        RESET="\033[0m"
+        case "$LEVEL" in
+          debug) COLOR="\033[0;36m"  ;; # cyan
+          info)  COLOR="\033[0;32m"  ;; # green
+          warn)  COLOR="\033[0;33m"  ;; # yellow
+          error) COLOR="\033[0;31m"  ;; # red
+          *)     COLOR="$RESET"      ;;
+        esac
+        printf "''${COLOR}[%s][%s]''${RESET} %s\n" "$LEVEL" "''${_LOG_CTX:-activation}" "$MSG" >&2
+      }
+      log_debug() { _log debug "$@"; }
+      log_info()  { _log info  "$@"; }
+      log_warn()  { _log warn  "$@"; }
+      log_error() { _log error "$@"; }
+    '';
+
     pkg = rec {
+      detectManagerFn = ''
+        detect_pkg_manager() {
+          if [ -x "${cmds.apt}" ] || command -v apt >/dev/null 2>&1; then
+            echo "apt"
+          elif [ -x "/usr/bin/dnf" ] || command -v dnf >/dev/null 2>&1; then
+            echo "dnf"
+          elif [ -x "/usr/bin/pacman" ] || command -v pacman >/dev/null 2>&1; then
+            echo "pacman"
+          elif [ -x "/usr/bin/zypper" ] || command -v zypper >/dev/null 2>&1; then
+            echo "zypper"
+          else
+            log_error "[pkg] no supported package manager found; PATH=$PATH"
+            echo "unknown"
+          fi
+        }
+      '';
+
       isInstalledFn = ''
         pkg_installed() {
-          ${cmds.dpkgQuery} -W -f='$'"{Status}" "$1" 2>/dev/null | ${cmds.grep} -q "ok installed"
+          PKG_MANAGER="$(detect_pkg_manager)"
+          case "$PKG_MANAGER" in
+            apt)
+              if [ ! -x "${cmds.dpkgQuery}" ]; then
+                return 1
+              fi
+              ${cmds.dpkgQuery} -W -f='$'"{Status}" "$1" 2>/dev/null | ${cmds.grep} -q "ok installed"
+              ;;
+            dnf|zypper)
+              if [ ! -x "/usr/bin/rpm" ] && ! command -v rpm >/dev/null 2>&1; then
+                return 1
+              fi
+              /usr/bin/rpm -q "$1" >/dev/null 2>&1
+              ;;
+            pacman)
+              if [ ! -x "/usr/bin/pacman" ] && ! command -v pacman >/dev/null 2>&1; then
+                return 1
+              fi
+              /usr/bin/pacman -Q "$1" >/dev/null 2>&1
+              ;;
+            *)
+              return 1
+              ;;
+          esac
+        }
+      '';
+
+      updateFn = ''
+        pkg_update() {
+          PKG_MANAGER="$(detect_pkg_manager)"
+          case "$PKG_MANAGER" in
+            apt)
+              esudo ${cmds.apt} update
+              ;;
+            dnf)
+              esudo /usr/bin/dnf makecache -y
+              ;;
+            pacman)
+              esudo /usr/bin/pacman -Sy --noconfirm
+              ;;
+            zypper)
+              esudo /usr/bin/zypper --gpg-auto-import-keys refresh
+              ;;
+            *)
+              echo "No supported package manager found. Skipping package index update."
+              return 1
+              ;;
+          esac
+        }
+      '';
+
+      installFn = ''
+        pkg_install() {
+          if [ $# -eq 0 ]; then
+            return 0
+          fi
+
+          PKG_MANAGER="$(detect_pkg_manager)"
+          case "$PKG_MANAGER" in
+            apt)
+              esudo ${cmds.apt} install -y "$@"
+              ;;
+            dnf)
+              esudo /usr/bin/dnf install -y "$@"
+              ;;
+            pacman)
+              esudo /usr/bin/pacman -S --noconfirm --needed "$@"
+              ;;
+            zypper)
+              esudo /usr/bin/zypper --non-interactive install "$@"
+              ;;
+            *)
+              echo "No supported package manager found. Cannot install: $*"
+              return 1
+              ;;
+          esac
+        }
+      '';
+
+      installFilesFn = ''
+        pkg_install_files() {
+          if [ $# -eq 0 ]; then
+            return 0
+          fi
+
+          PKG_MANAGER="$(detect_pkg_manager)"
+          case "$PKG_MANAGER" in
+            apt)
+              esudo ${cmds.apt} install -y "$@"
+              ;;
+            dnf)
+              esudo /usr/bin/dnf install -y "$@"
+              ;;
+            zypper)
+              esudo /usr/bin/zypper --non-interactive install "$@"
+              ;;
+            pacman)
+              echo "Local package file installation is not implemented for pacman in this module."
+              return 1
+              ;;
+            *)
+              echo "No supported package manager found. Cannot install local package files: $*"
+              return 1
+              ;;
+          esac
         }
       '';
     };
@@ -129,7 +280,7 @@ let
         message ? null
       }:
         sys.task.root {
-          inherit after;
+          inherit after name;
           script = ''
             ${lib.optionalString (message != null) "echo \"${message}\""}
             ${pre}
@@ -145,13 +296,14 @@ let
         after ? [ "writeBoundary" ],
         asRoot ? false,
         guardDryRun ? true,
+        name ? "activation",
         pre ? "",
         script ? "",
         post ? "",
         message ? null
       }:
         sys.mkActivation {
-          inherit after asRoot guardDryRun;
+          inherit after asRoot guardDryRun name;
           script = ''
             ${lib.optionalString (message != null) "echo \"${message}\""}
             ${pre}
@@ -161,18 +313,28 @@ let
         };
 
       root = args: activation (args // { asRoot = true; });
+
+      mkAttr     = args: { home.activation.${args.name} = activation args; };
+      mkRootAttr = args: mkAttr (args // { asRoot = true; });
     };
 
     mkActivation = {
       after ? [ "writeBoundary" ],
       asRoot ? false,
       guardDryRun ? true,
+      name ? "activation",
       script
     }:
       lib.hm.dag.entryAfter after ''
+        _LOG_CTX="${name}"
         ${lib.optionalString asRoot sys.initSudoPwd}
         ${lib.optionalString asRoot sys.esudoFn}
+        ${sys.logFn}
+        ${sys.pkg.detectManagerFn}
         ${sys.pkg.isInstalledFn}
+        ${sys.pkg.updateFn}
+        ${sys.pkg.installFn}
+        ${sys.pkg.installFilesFn}
         ${lib.optionalString guardDryRun ''
           if [ -z "$DRY_RUN_CMD" ]; then
         ''}
