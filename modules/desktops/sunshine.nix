@@ -83,11 +83,17 @@ in
         esudo ${sys.cmds.usermod} -aG input ${config.home.username}
       fi
 
+      # enable the input
       esudo ${sys.cmds.modprobe} uinput
       esudo ${sys.cmds.modprobe} uhid
       esudo ${sys.cmds.udevadm} control --reload-rules
       esudo ${sys.cmds.udevadm} trigger
 
+      esudo ${sys.cmds.ufw} allow 47984,47989,47990,48010/tcp
+      esudo ${sys.cmds.ufw} allow 47998:48000/udp
+      esudo ${sys.cmds.ufw} allow 48002/udp
+      esudo ${sys.cmds.ufw} allow 48010/udp
+      esudo ${sys.cmds.ufw} reload
     '';
   };
 }

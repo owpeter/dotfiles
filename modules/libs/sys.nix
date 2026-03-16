@@ -29,6 +29,7 @@ let
       mktemp = "/usr/bin/mktemp";
       rm = "/usr/bin/rm";
       curl = "${pkgs.curl}/bin/curl";
+      ufw = "/usr/sbin/ufw";
     };
 
     initSudoPwd = ''
