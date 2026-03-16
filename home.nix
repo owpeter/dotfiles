@@ -2,6 +2,7 @@
 
 let 
   isDesktop = (secrets.home.option or "desktop") == "desktop";
+  isNiri = (secrets.home.option or "all") == "niri" || (secrets.home.option or "all") == "all";
 in
 {
   imports = [

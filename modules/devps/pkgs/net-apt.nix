@@ -28,7 +28,7 @@ in
         for item in "''${RAW_PKGS[@]}"; do
           PKG=''${item%%|*}
           URL=''${item#*|}
-          if ! ${sys.cmds.dpkgQuery} -W -f='$'"{Status}" "$PKG" | grep -q "ok installed"; then
+          if ! pkg_installed "$PKG"; then
             echo "Package '$PKG' not found. Preparing to install from $URL..."
             filename=$(basename "$URL")
             target="$TEMP_DIR/$filename"

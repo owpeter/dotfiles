@@ -26,7 +26,7 @@ in
         for item in "''${RAW_PKGS[@]}"; do
           PKG="$item"
 
-          if ${sys.cmds.dpkgQuery} -W -f='$'"{Status}" "$PKG" 2>/dev/null | ${sys.cmds.grep} -q "ok installed"; then
+          if pkg_installed "$PKG"; then
             echo "Package '$PKG' is already installed. Skipping."
             continue
           fi
