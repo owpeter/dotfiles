@@ -6,6 +6,8 @@ in
 {
   home.packages = with pkgs; [
     # utils
+    xclip
+    xsel
     copyq
     slurp
     grim

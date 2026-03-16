@@ -6,7 +6,7 @@
 #
 ###################################
 
-{ pkgs, config, secrets, lib, isDesktop, sys, ... }:
+{ pkgs, config, secrets, lib, sys, ... }:
 
 let
   nixCustomConfig = {
@@ -42,12 +42,7 @@ in
     bat
     tree
     chsrc
-  ] ++ lib.optionals isDesktop (with pkgs; [
-
-    # desktop
-    xclip
-    xsel
-  ]);
+  ];
 
   home.file.".config/nixpkgs/config.nix".text = ''
     {
