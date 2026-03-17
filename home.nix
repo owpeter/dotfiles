@@ -32,6 +32,11 @@ in
       XDG_DATA_DIRS = "$GSETTINGS_SCHEMAS_PATH:$XDG_DATA_DIRS";
       API_KEY = secrets.agent.apikey;
       DASHSCOPE_API_KEY = secrets.agent.apikey;
+
+      # ANTHROPIC
+      ANTHROPIC_BASE_URL = "https://dashscope.aliyuncs.com/apps/anthropic";
+      ANTHROPIC_API_KEY = secrets.agent.apikey;
+      ANTHROPIC_MODEL = "qwen3.5-plus";
     };
     _module.args.isDesktop = isDesktop;
     programs.home-manager.enable = true;
