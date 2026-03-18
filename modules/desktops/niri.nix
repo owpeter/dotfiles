@@ -67,6 +67,7 @@ in
     spawn-at-startup "/usr/bin/gnome-keyring-daemon" "--start" "--components=secrets"
     spawn-at-startup "${config.home.profileDirectory}/bin/fcitx5" "-d"
     spawn-at-startup "${pkgs.dex}/bin/dex" "-a" "-s" "~/.config/autostart:/etc/xdg/autostart"
+    spawn-at-startup "${pkgs.swayosd}/bin/swayosd-server"
 
     workspace "scratch" {}
 
@@ -165,6 +166,11 @@ in
       "Mod+Shift+Up"   { move-window-up; }
       "Mod+Shift+Down" { move-window-down; }
       "Mod+W" { toggle-column-tabbed-display; }
+
+      "XF86AudioRaiseVolume" allow-when-locked=true { spawn "${pkgs.swayosd}/bin/swayosd-client" "--output-volume" "raise"; }
+      "XF86AudioLowerVolume" allow-when-locked=true { spawn "${pkgs.swayosd}/bin/swayosd-client" "--output-volume" "lower"; }
+      "XF86AudioMute"        allow-when-locked=true { spawn "${pkgs.swayosd}/bin/swayosd-client" "--output-volume" "mute-toggle"; }
+      "XF86AudioMicMute"     allow-when-locked=true { spawn "${pkgs.swayosd}/bin/swayosd-client" "--input-volume" "mute-toggle"; }
     }
 
     output "DP-3" {
@@ -194,6 +200,8 @@ in
   # "${pkgs.niri}/share/xdg-desktop-portal/niri-portals.conf";
 
   xdg.configFile."xdg-desktop-portal/niri-portals.conf".text = lib.generators.toINI {} niriPortal;
+
+  services.swayosd.enable = true;
 
   home.activation.niriStartUp = sys.config.activation {
     name = "niri.desktop";

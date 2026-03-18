@@ -13,6 +13,7 @@ in
     grim
     swappy
     nixgl.auto.nixGLDefault
+    wev
 
     # apps
     steam-run
@@ -69,12 +70,12 @@ in
       ${sys.cmds.curl} -fsSL https://repo.waydro.id > /tmp/waydroid.sh
       if pkg_installed "waydroid"; then
         echo "Package 'waydroid' is already installed."
-        exit 0
+      else
+        esudo bash /tmp/waydroid.sh
+        esudo ${sys.cmds.apt} install -y waydroid
+        waydroid prop set persist.waydroid.multi_windows true
+        esudo ${sys.cmds.systemctl} restart waydroid-container
       fi
-      esudo bash /tmp/waydroid.sh
-      esudo ${sys.cmds.apt} install -y waydroid
-      waydroid prop set persist.waydroid.multi_windows true
-      esudo ${sys.cmds.systemctl} restart waydroid-container
     '';
   };
 

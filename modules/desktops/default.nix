@@ -16,5 +16,6 @@ in
   ]
   ++ lib.optionals (desktop == "niri" || desktop == "all") [
     ./niri.nix
+    ./niris
   ];
 }
