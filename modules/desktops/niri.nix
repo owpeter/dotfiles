@@ -1,8 +1,9 @@
 # {...}:{}
-{ config, pkgs, lib, secrets, sys, ... }:
+{ config, pkgs, lib, secrets, sys, niri-scratchpad-flake, ... }:
 
 let
   wallpaperPath = ../../resources/images/background.jpg;
+  niriScratchpadPkg = niri-scratchpad-flake.packages.${pkgs.system}.default;
   niri-wrapper = pkgs.writeShellScriptBin "start-niri-desktop" ''
     export XDG_SESSION_TYPE=wayland
     export XDG_CURRENT_DESKTOP=niri
@@ -49,6 +50,8 @@ in
 {
   home.packages = with pkgs; [
     niri
+    nemo
+    niriScratchpadPkg
     noctalia-shell
     fuzzel
     alacritty
@@ -66,10 +69,11 @@ in
     spawn-at-startup "/usr/bin/dbus-update-activation-environment" "--all"
     spawn-at-startup "/usr/bin/gnome-keyring-daemon" "--start" "--components=secrets"
     spawn-at-startup "${config.home.profileDirectory}/bin/fcitx5" "-d"
-    spawn-at-startup "${pkgs.dex}/bin/dex" "-a" "-s" "~/.config/autostart:/etc/xdg/autostart"
-    spawn-at-startup "${pkgs.swayosd}/bin/swayosd-server"
+    spawn-at-startup "nemo"
 
-    workspace "scratch" {}
+    workspace "desktop"
+    workspace "devs"
+    workspace "scratch"
 
     input {
       mod-key "Alt"
@@ -113,6 +117,13 @@ in
     }
 
     window-rule {
+      match app-id="quake-.*|nemo"
+      open-floating true
+      open-on-workspace "scratch"
+      open-focused false
+    }
+
+    window-rule {
       match app-id="quake-term"
       open-floating true
       opacity 0.8
@@ -128,7 +139,8 @@ in
 
     binds {
       "F1" { spawn "${config.home.profileDirectory}/bin/screenshot"; }
-      "F12" { spawn "${config.home.profileDirectory}/bin/niri-scratchpad" "-id" "quake-term" "-s" "${pkgs.alacritty}/bin/alacritty --class quake-term" "-m"; }
+      "F11" { spawn-sh "${niriScratchpadPkg}/bin/nscratch -id nemo"; }
+      "F12" { spawn-sh "${niriScratchpadPkg}/bin/nscratch -id quake-term -a -m -s '${pkgs.alacritty}/bin/alacritty --class quake-term'"; }
       "Mod+Return" { spawn "${pkgs.alacritty}/bin/alacritty"; }
       "Super+Space" { spawn "${pkgs.fuzzel}/bin/fuzzel"; }
       "Mod+Q" { close-window; }

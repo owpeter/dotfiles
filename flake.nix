@@ -8,9 +8,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixgl.url = "github:nix-community/nixGL";
+    niri-scratchpad-flake = {
+      url = "github:gvolpe/niri-scratchpad";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
-  outputs = { self, nixpkgs, home-manager, nixgl, ... }:
+  outputs = { self, nixpkgs, home-manager, nixgl, niri-scratchpad-flake, ... }:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs {
@@ -30,7 +34,9 @@
     {
       homeConfigurations."default" = home-manager.lib.homeManagerConfiguration {
         inherit pkgs;
-        extraSpecialArgs = { inherit secrets; };
+        extraSpecialArgs = {
+          inherit secrets niri-scratchpad-flake;
+        };
         modules = [ ./home.nix ];
       };
     };
