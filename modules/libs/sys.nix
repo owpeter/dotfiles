@@ -292,6 +292,24 @@ let
         };
     };
 
+    # Global init activation - runs before writeBoundary
+    initActivation = lib.hm.dag.entryBefore [ "writeBoundary" ] ''
+      # === Global function definitions ===
+      # Sudo with password support
+      ${initSudoPwd}
+      ${esudoFn}
+
+      # Logging functions
+      ${logFn}
+
+      # Package management functions
+      ${pkg.detectManagerFn}
+      ${pkg.isInstalledFn}
+      ${pkg.updateFn}
+      ${pkg.installFn}
+      ${pkg.installFilesFn}
+    '';
+
     task = rec {
       activation = {
         after ? [ "writeBoundary" ],
@@ -303,15 +321,24 @@ let
         post ? "",
         message ? null
       }:
-        sys.mkActivation {
-          inherit after asRoot guardDryRun name;
-          script = ''
-            ${lib.optionalString (message != null) "echo \"${message}\""}
-            ${pre}
-            ${script}
-            ${post}
-          '';
-        };
+        lib.hm.dag.entryAfter after ''
+          _LOG_CTX="${name}"
+          ${lib.optionalString asRoot ''
+            if [ -z "''${SUDO_PWD:-}" ]; then
+              ${initSudoPwd}
+            fi
+          ''}
+          ${lib.optionalString (message != null) "echo \"${message}\""}
+          ${pre}
+          ${lib.optionalString guardDryRun ''
+            if [ -z "$DRY_RUN_CMD" ]; then
+          ''}
+          ${script}
+          ${lib.optionalString guardDryRun ''
+            fi
+          ''}
+          ${post}
+        '';
 
       root = args: activation (args // { asRoot = true; });
 
@@ -328,14 +355,11 @@ let
     }:
       lib.hm.dag.entryAfter after ''
         _LOG_CTX="${name}"
-        ${lib.optionalString asRoot sys.initSudoPwd}
-        ${lib.optionalString asRoot sys.esudoFn}
-        ${sys.logFn}
-        ${sys.pkg.detectManagerFn}
-        ${sys.pkg.isInstalledFn}
-        ${sys.pkg.updateFn}
-        ${sys.pkg.installFn}
-        ${sys.pkg.installFilesFn}
+        ${lib.optionalString asRoot ''
+          if [ -z "''${SUDO_PWD:-}" ]; then
+            ${initSudoPwd}
+          fi
+        ''}
         ${lib.optionalString guardDryRun ''
           if [ -z "$DRY_RUN_CMD" ]; then
         ''}
@@ -354,4 +378,5 @@ let
 in
 {
   _module.args.sys = sys;
+  home.activation.sysInit = sys.initActivation;
 }
